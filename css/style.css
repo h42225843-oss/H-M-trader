@@ -105,12 +105,7 @@ input,select{font-family:inherit;}
 .login-error{color:var(--danger); font-size:13px; min-height:16px; margin:4px 0 0;}
 
 /* ---------- App shell ---------- */
-.app{display:flex; min-height:100vh;}
-.app.app-in .sidebar{animation: slide-in-left .5s cubic-bezier(.2,.8,.25,1) both;}
-.app.app-in .topbar{animation: fade-up .5s ease .1s both;}
-@keyframes slide-in-left{
-  from{opacity:0; transform:translateX(-16px);}
-  to{opacity:1; transform:translateX(0);}
+.app{display:flex; min-height:100vh;} .app.app-in .topbar{animation: fade-up .5s ease .1s both;} @media(min-width:901px){ .app.app-in .sidebar{animation: slide-in-left .5s cubic-bezier(.2,.8,.25,1) both;} } @keyframes slide-in-left{ from{opacity:0; transform:translateX(-16px);} to{opacity:1; transform:translateX(0);} }
 }
 .sidebar{
   width:240px; background:var(--green-deep); color:#EFEAE0; display:flex; flex-direction:column;
