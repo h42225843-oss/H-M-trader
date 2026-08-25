@@ -87,13 +87,26 @@ function setView(view) {
   target.classList.add('view-enter');
   const titles = { dashboard: 'Dashboard', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
   document.getElementById('view-title').textContent = titles[view];
-  document.querySelector('.sidebar').classList.remove('open');
+  closeSidebar();
   renderAll();
 }
 
+const sidebarEl = document.querySelector('.sidebar');
+const backdropEl = document.getElementById('sidebar-backdrop');
+
+function openSidebar() {
+  sidebarEl.classList.add('open');
+  backdropEl.classList.add('show');
+}
+function closeSidebar() {
+  sidebarEl.classList.remove('open');
+  backdropEl.classList.remove('show');
+}
+
 document.getElementById('menu-toggle').addEventListener('click', () => {
-  document.querySelector('.sidebar').classList.toggle('open');
+  if (sidebarEl.classList.contains('open')) closeSidebar(); else openSidebar();
 });
+backdropEl.addEventListener('click', closeSidebar);
 
 document.getElementById('topbar-date').textContent = todayStr();
 

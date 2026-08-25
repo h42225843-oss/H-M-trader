@@ -230,13 +230,19 @@ tbody tr:hover{background:#FBFAF6;}
 }
 
 /* ---------- Responsive ---------- */
+.sidebar-backdrop{
+  display:none; position:fixed; inset:0; background:rgba(10,20,17,0.5); z-index:39;
+  opacity:0; transition:opacity .2s ease;
+}
+.sidebar-backdrop.show{display:block; opacity:1;}
+
 @media(max-width:900px){
   .stat-grid{grid-template-columns:repeat(2,1fr);}
   .sidebar{
     position:fixed; left:0; top:0; bottom:0; z-index:40; transform:translateX(-100%); transition:transform .2s;
   }
   .sidebar.open{transform:translateX(0);}
-  .menu-toggle{display:block;}
+  .menu-toggle{display:block; position:relative; z-index:41;}
   .view{padding:18px 16px 50px;}
   .topbar{padding:14px 16px;}
   thead{display:none;}
