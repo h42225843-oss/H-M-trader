@@ -71,13 +71,13 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
 
 /* ---------------- Navigation ---------------- */
-document.querySelectorAll('.nav-item[data-view]').forEach((btn) => {
+document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').forEach((btn) => {
   btn.addEventListener('click', () => setView(btn.dataset.view));
 });
 
 function setView(view) {
   state.view = view;
-  document.querySelectorAll('.nav-item[data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   const target = document.getElementById(`view-${view}`);
   target.classList.add('active');
@@ -87,26 +87,8 @@ function setView(view) {
   target.classList.add('view-enter');
   const titles = { dashboard: 'Dashboard', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
   document.getElementById('view-title').textContent = titles[view];
-  closeSidebar();
   renderAll();
 }
-
-const sidebarEl = document.querySelector('.sidebar');
-const backdropEl = document.getElementById('sidebar-backdrop');
-
-function openSidebar() {
-  sidebarEl.classList.add('open');
-  backdropEl.classList.add('show');
-}
-function closeSidebar() {
-  sidebarEl.classList.remove('open');
-  backdropEl.classList.remove('show');
-}
-
-document.getElementById('menu-toggle').addEventListener('click', () => {
-  if (sidebarEl.classList.contains('open')) closeSidebar(); else openSidebar();
-});
-backdropEl.addEventListener('click', closeSidebar);
 
 document.getElementById('topbar-date').textContent = todayStr();
 

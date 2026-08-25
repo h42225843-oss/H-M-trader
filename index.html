@@ -70,7 +70,6 @@
 
   <main class="main">
     <header class="topbar">
-      <button id="menu-toggle" class="menu-toggle" aria-label="Menu">☰</button>
       <h2 id="view-title">Dashboard</h2>
       <div class="topbar-date" id="topbar-date"></div>
     </header>
@@ -81,6 +80,29 @@
     <section id="view-customers" class="view"></section>
     <section id="view-suppliers" class="view"></section>
   </main>
+
+  <nav class="bottom-nav">
+    <button class="bottom-nav-item active" data-view="dashboard">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="3" width="8" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13" y="10" width="8" height="11" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3" y="13" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+      <span>Home</span>
+    </button>
+    <button class="bottom-nav-item" data-view="inventory">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M4 8l1.5-4h13L20 8" stroke="currentColor" stroke-width="1.8"/><rect x="4" y="8" width="16" height="12" rx="1.5" stroke="currentColor" stroke-width="1.8"/><path d="M9 12h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Stock</span>
+    </button>
+    <button class="bottom-nav-item" data-view="sales">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 6h18M3 12h18M3 18h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Sales</span>
+    </button>
+    <button class="bottom-nav-item" data-view="customers">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="12" cy="8" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M5 20c0-3.5 3-6 7-6s7 2.5 7 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      <span>Dues</span>
+    </button>
+    <button class="bottom-nav-item" data-view="suppliers">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M3 21V9l9-6 9 6v12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8"/></svg>
+      <span>Suppliers</span>
+    </button>
+  </nav>
 </div>
 
 <div id="toast" class="toast"></div>
