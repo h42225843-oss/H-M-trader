@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>H.M Traders — Ledger</title>
+<meta name="description" content="H.M Traders inventory, sales and dues ledger" />
+<meta name="theme-color" content="#16332B" />
+<link rel="manifest" href="manifest.json" />
+<link rel="apple-touch-icon" href="icons/icon-192.png" />
+<link rel="icon" href="icons/icon-192.png" type="image/png" />
+<link rel="icon" href="icons/favicon.ico" sizes="any" />
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+<div id="splash" class="splash">
+  <div class="splash-mark">
+    <img src="icons/icon-192.png" alt="" width="88" height="88" />
+  </div>
+  <div class="splash-name">H.M Traders</div>
+  <div class="splash-bar"><span></span></div>
+</div>
+
+<div id="login-screen" class="login-screen hidden">
+  <div class="login-card">
+    <div class="login-mark">
+      <svg width="34" height="34" viewBox="0 0 24 24" fill="none"><path d="M9 2h6v3.2c0 .9.3 1.7.9 2.4l1.6 1.9c.65.77 1 1.75 1 2.76V19a3 3 0 0 1-3 3H8.5a3 3 0 0 1-3-3V12.25c0-1.01.35-1.99 1-2.76l1.6-1.9c.6-.7.9-1.5.9-2.4V2Z" stroke="currentColor" stroke-width="1.4"/><path d="M7 13h10" stroke="currentColor" stroke-width="1.4"/></svg>
+    </div>
+    <h1>H.M Traders</h1>
+    <p class="login-sub">Ledger &amp; Stock Register</p>
+    <form id="login-form">
+      <label>Email
+        <input type="email" id="login-email" required autocomplete="username" />
+      </label>
+      <label>Password
+        <input type="password" id="login-password" required autocomplete="current-password" />
+      </label>
+      <button type="submit" class="btn-primary" id="login-btn">Sign in</button>
+      <p class="login-error" id="login-error"></p>
+    </form>
+  </div>
+</div>
+
+<div id="app" class="app hidden">
+
+  <aside class="sidebar">
+    <div class="brand">
+      <span class="brand-mark">HM</span>
+      <div>
+        <div class="brand-name">H.M Traders</div>
+        <div class="brand-sub">Ledger</div>
+      </div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" data-view="dashboard"><span class="dot"></span>Dashboard</button>
+      <button class="nav-item" data-view="inventory"><span class="dot"></span>Inventory</button>
+      <button class="nav-item" data-view="sales"><span class="dot"></span>Sales</button>
+      <button class="nav-item" data-view="customers"><span class="dot"></span>Customers &amp; Dues</button>
+      <button class="nav-item" data-view="suppliers"><span class="dot"></span>Suppliers &amp; Purchases</button>
+    </nav>
+    <button id="logout-btn" class="nav-item logout">Sign out</button>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button id="menu-toggle" class="menu-toggle" aria-label="Menu">☰</button>
+      <h2 id="view-title">Dashboard</h2>
+      <div class="topbar-date" id="topbar-date"></div>
+    </header>
+
+    <section id="view-dashboard" class="view active"></section>
+    <section id="view-inventory" class="view"></section>
+    <section id="view-sales" class="view"></section>
+    <section id="view-customers" class="view"></section>
+    <section id="view-suppliers" class="view"></section>
+  </main>
+</div>
+
+<div id="toast" class="toast"></div>
+
+<!-- Firebase (compat SDK — no build step needed) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+
+<script src="js/firebase-config.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
