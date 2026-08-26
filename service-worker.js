@@ -1,4 +1,4 @@
-const CACHE_NAME = 'hm-traders-v5';
+const CACHE_NAME = 'hm-traders-v7';
 const ASSETS = [
   '/',
   '/index.html',

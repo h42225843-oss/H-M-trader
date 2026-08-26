@@ -304,6 +304,26 @@ function openProductModal(existing) {
     </form>
   `);
 
+  // Keep "Total Pcs" always smaller than "Pieces per crate" — auto-roll any overflow into
+  // whole crates the moment you tab away, so what's on screen always matches what gets saved.
+  const cratesInput = document.getElementById('p-crates');
+  const pcsInput = document.getElementById('p-pcs');
+  const percrateInput = document.getElementById('p-percrate');
+  function normalizeCrateFields() {
+    const size = Number(percrateInput.value) || 0;
+    if (size <= 0) return;
+    let crates = Number(cratesInput.value) || 0;
+    let pcs = Number(pcsInput.value) || 0;
+    if (pcs >= size || pcs < 0) {
+      crates += Math.floor(pcs / size);
+      pcs = pcs % size;
+      cratesInput.value = crates;
+      pcsInput.value = pcs;
+    }
+  }
+  pcsInput.addEventListener('change', normalizeCrateFields);
+  percrateInput.addEventListener('change', normalizeCrateFields);
+
   document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const reEnable = guardDoubleSubmit(e.target);
