@@ -16,6 +16,17 @@ const money = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK', { maximumFract
 const todayStr = () => new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
 const uid = () => Math.random().toString(36).slice(2, 10);
 
+// Formats a raw piece-count as "N crates + M pcs" using the product's crate size.
+function crateBreakdown(pcs, perCrate) {
+  const size = Number(perCrate) > 0 ? Number(perCrate) : null;
+  if (!size) return `${pcs} pcs`;
+  const crates = Math.floor(pcs / size);
+  const rem = pcs % size;
+  if (crates === 0) return `${rem} pcs`;
+  if (rem === 0) return `${crates} crate${crates !== 1 ? 's' : ''}`;
+  return `${crates} crate${crates !== 1 ? 's' : ''} + ${rem} pcs`;
+}
+
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -134,6 +145,12 @@ function renderDashboard() {
   const totalDue = state.customers.reduce((a, c) => a + (c.totalDue || 0), 0);
   const lowStock = state.products.filter((p) => p.stock <= (p.lowStockAt ?? 5));
   const stockValue = state.products.reduce((a, p) => a + p.stock * p.costPrice, 0);
+  const totalPcs = state.products.reduce((a, p) => a + (p.stock || 0), 0);
+  // Total crates = sum of full crates across all products that have a crate size set.
+  const totalCrates = state.products.reduce((a, p) => {
+    if (!p.unitsPerCrate) return a;
+    return a + Math.floor((p.stock || 0) / p.unitsPerCrate);
+  }, 0);
 
   el.innerHTML = `
     <div class="stat-grid">
@@ -141,6 +158,8 @@ function renderDashboard() {
       <div class="stat-card"><div class="label">Sales Recorded Today</div><div class="value">${todaysSales.length}</div></div>
       <div class="stat-card ${totalDue > 0 ? 'warn' : ''}"><div class="label">Total Dues Owed</div><div class="value">${money(totalDue)}</div></div>
       <div class="stat-card"><div class="label">Stock Value</div><div class="value">${money(stockValue)}</div></div>
+      <div class="stat-card"><div class="label">Total Crates</div><div class="value">${totalCrates}</div></div>
+      <div class="stat-card"><div class="label">Total Pcs</div><div class="value">${totalPcs}</div></div>
     </div>
     <div class="panel">
       <div class="panel-head"><h3>Low Stock</h3></div>
@@ -149,8 +168,8 @@ function renderDashboard() {
         <tbody>${lowStock.map((p) => `
           <tr>
             <td data-label="Product">${p.name}</td>
-            <td data-label="Stock" class="mono">${p.stock} ${p.unit || ''}</td>
-            <td data-label="Reorder at" class="mono">${p.lowStockAt ?? 5}</td>
+            <td data-label="Stock" class="mono">${crateBreakdown(p.stock, p.unitsPerCrate)}</td>
+            <td data-label="Reorder at" class="mono">${p.lowStockAt ?? 5} pcs</td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">Nothing running low right now.</div>`}
     </div>
@@ -175,7 +194,7 @@ function renderInventory() {
           <tr>
             <td data-label="Name">${p.name}</td>
             <td data-label="Category">${p.category || '—'}</td>
-            <td data-label="Stock" class="mono">${p.stock <= (p.lowStockAt ?? 5) ? `<span class="pill warn">${p.stock} ${p.unit || ''}</span>` : `${p.stock} ${p.unit || ''}`}</td>
+            <td data-label="Stock" class="mono">${p.stock <= (p.lowStockAt ?? 5) ? `<span class="pill warn">${crateBreakdown(p.stock, p.unitsPerCrate)}</span>` : crateBreakdown(p.stock, p.unitsPerCrate)}</td>
             <td data-label="Cost" class="mono">${money(p.costPrice)}</td>
             <td data-label="Sale price" class="mono">${money(p.salePrice)}</td>
             <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
@@ -188,17 +207,17 @@ function renderInventory() {
 
 function openProductModal(existing) {
   const isEdit = !!existing;
-  const p = existing || { name: '', category: '', stock: 0, unit: 'pcs', costPrice: '', salePrice: '', lowStockAt: 5 };
+  const p = existing || { name: '', category: '', stock: 0, unit: 'pcs', unitsPerCrate: '', costPrice: '', salePrice: '', lowStockAt: 5 };
   showModal(`
     <h3>${isEdit ? 'Edit product' : 'Add product'}</h3>
     <form id="product-form">
       <label>Product name<input required id="p-name" value="${p.name}" placeholder="e.g. 500ml Water Bottle" /></label>
       <label>Category<input id="p-category" value="${p.category}" placeholder="e.g. Water, Juice, Glass" /></label>
-      <label>Unit<input id="p-unit" value="${p.unit}" placeholder="pcs, cartons, crates" /></label>
-      <label>Current stock<input required type="number" id="p-stock" value="${p.stock}" /></label>
-      <label>Low stock alert at<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
-      <label>Cost price (per unit)<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
-      <label>Sale price (per unit)<input required type="number" id="p-sale" value="${p.salePrice}" /></label>
+      <label>Current stock (in pcs)<input required type="number" id="p-stock" value="${p.stock}" /></label>
+      <label>Pieces per crate <span style="font-weight:400;">(leave blank if sold loose)</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
+      <label>Low stock alert at (pcs)<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
+      <label>Cost price (per pc)<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
+      <label>Sale price (per pc)<input required type="number" id="p-sale" value="${p.salePrice}" /></label>
       <div class="modal-actions">
         ${isEdit ? `<button type="button" class="btn danger" id="p-delete">Delete</button>` : ''}
         <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
@@ -212,8 +231,9 @@ function openProductModal(existing) {
     const data = {
       name: document.getElementById('p-name').value.trim(),
       category: document.getElementById('p-category').value.trim(),
-      unit: document.getElementById('p-unit').value.trim() || 'pcs',
+      unit: 'pcs',
       stock: Number(document.getElementById('p-stock').value),
+      unitsPerCrate: Number(document.getElementById('p-percrate').value) || null,
       lowStockAt: Number(document.getElementById('p-lowstock').value) || 5,
       costPrice: Number(document.getElementById('p-cost').value),
       salePrice: Number(document.getElementById('p-sale').value),
@@ -250,7 +270,7 @@ window.editProduct = (id) => {
 function renderSalesTable(sales) {
   if (!sales.length) return `<div class="empty-state">No sales recorded yet.</div>`;
   return `
-    <table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th></tr></thead>
+    <table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
     <tbody>${sales.map((s) => `
       <tr>
         <td data-label="Date">${new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
@@ -259,6 +279,7 @@ function renderSalesTable(sales) {
         <td data-label="Total" class="mono">${money(s.total)}</td>
         <td data-label="Paid" class="mono">${money(s.paid)}</td>
         <td data-label="Due">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">Settled</span>`}</td>
+        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">Edit</button></td>
       </tr>`).join('')}</tbody></table>
   `;
 }
@@ -354,7 +375,7 @@ function saleLineRow(rowId) {
     <div class="line-item-row" data-row="${rowId}">
       <select class="li-product">
         <option value="">Select product…</option>
-        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${p.stock} left)</option>`).join('')}
+        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)} left)</option>`).join('')}
       </select>
       <input class="li-qty" type="number" min="1" value="1" placeholder="Qty" />
       <span class="mono" style="font-size:12px;color:var(--muted);">unit price auto</span>
@@ -362,6 +383,56 @@ function saleLineRow(rowId) {
     </div>
   `;
 }
+
+window.editSale = (id) => {
+  const s = state.sales.find((x) => x.id === id);
+  if (!s) return;
+  showModal(`
+    <h3>Edit sale — ${s.customerName || 'Walk-in'}</h3>
+    <p style="color:var(--muted); font-size:14px; margin:0;">Items: ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>Total: <strong class="mono">${money(s.total)}</strong></p>
+    <form id="edit-sale-form">
+      <label>Amount paid<input required type="number" id="es-paid" value="${s.paid}" /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn danger" id="es-delete">Delete sale</button>
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">Save changes</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('edit-sale-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const newPaid = Number(document.getElementById('es-paid').value) || 0;
+    const newDue = Math.max(s.total - newPaid, 0);
+    const dueDelta = newDue - s.due;
+    const batch = db.batch();
+    batch.update(db.collection('sales').doc(s.id), { paid: newPaid, due: newDue });
+    if (s.customerId && dueDelta !== 0) {
+      const customer = state.customers.find((c) => c.id === s.customerId);
+      if (customer) batch.update(db.collection('customers').doc(customer.id), { totalDue: (customer.totalDue || 0) + dueDelta });
+    }
+    await batch.commit();
+    toast('Sale updated');
+    closeModal();
+  });
+
+  document.getElementById('es-delete').addEventListener('click', async () => {
+    if (!confirm('Delete this sale? Stock and customer dues will be reversed.')) return;
+    const batch = db.batch();
+    batch.delete(db.collection('sales').doc(s.id));
+    s.items.forEach((i) => {
+      const p = state.products.find((x) => x.id === i.productId);
+      if (p) batch.update(db.collection('products').doc(i.productId), { stock: p.stock + i.qty });
+    });
+    if (s.customerId && s.due > 0) {
+      const customer = state.customers.find((c) => c.id === s.customerId);
+      if (customer) batch.update(db.collection('customers').doc(customer.id), { totalDue: Math.max((customer.totalDue || 0) - s.due, 0) });
+    }
+    await batch.commit();
+    toast('Sale deleted');
+    closeModal();
+  });
+};
 
 /* ============================================================
    CUSTOMERS & DUES
@@ -380,35 +451,60 @@ function renderCustomers() {
             <td data-label="Due">${c.totalDue > 0 ? `<span class="pill warn">${money(c.totalDue)}</span>` : `<span class="pill ok">Clear</span>`}</td>
             <td data-label="">
               ${c.totalDue > 0 ? `<button class="btn secondary small" onclick="openPaymentModal('${c.id}')">Record payment</button>` : ''}
+              <button class="btn secondary small" onclick="editCustomer('${c.id}')">Edit</button>
             </td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">No customers yet.</div>`}
     </div>
   `;
-  document.getElementById('add-customer-btn').addEventListener('click', () => {
-    showModal(`
-      <h3>Add customer</h3>
-      <form id="customer-form">
-        <label>Name<input required id="c-name" /></label>
-        <label>Phone<input id="c-phone" /></label>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-          <button type="submit" class="btn">Add customer</button>
-        </div>
-      </form>
-    `);
-    document.getElementById('customer-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await db.collection('customers').add({
-        name: document.getElementById('c-name').value.trim(),
-        phone: document.getElementById('c-phone').value.trim(),
-        totalDue: 0,
-      });
+  document.getElementById('add-customer-btn').addEventListener('click', () => openCustomerModal());
+}
+
+function openCustomerModal(existing) {
+  const isEdit = !!existing;
+  const c = existing || { name: '', phone: '' };
+  showModal(`
+    <h3>${isEdit ? 'Edit customer' : 'Add customer'}</h3>
+    <form id="customer-form">
+      <label>Name<input required id="c-name" value="${c.name}" /></label>
+      <label>Phone<input id="c-phone" value="${c.phone || ''}" /></label>
+      <div class="modal-actions">
+        ${isEdit ? `<button type="button" class="btn danger" id="c-delete">Delete</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add customer'}</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('customer-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      name: document.getElementById('c-name').value.trim(),
+      phone: document.getElementById('c-phone').value.trim(),
+    };
+    if (isEdit) {
+      await db.collection('customers').doc(existing.id).update(data);
+      toast('Customer updated');
+    } else {
+      await db.collection('customers').add({ ...data, totalDue: 0 });
       toast('Customer added');
+    }
+    closeModal();
+  });
+  if (isEdit) {
+    document.getElementById('c-delete').addEventListener('click', async () => {
+      if (c.totalDue > 0 && !confirm(`${c.name} still has ${money(c.totalDue)} due. Delete anyway?`)) return;
+      if (c.totalDue <= 0 && !confirm(`Delete customer "${c.name}"?`)) return;
+      await db.collection('customers').doc(existing.id).delete();
+      toast('Customer deleted');
       closeModal();
     });
-  });
+  }
 }
+
+window.editCustomer = (id) => {
+  const c = state.customers.find((x) => x.id === id);
+  if (c) openCustomerModal(c);
+};
 
 window.openPaymentModal = (customerId) => {
   const c = state.customers.find((x) => x.id === customerId);
@@ -443,50 +539,93 @@ function renderSuppliers() {
     <div class="panel">
       <div class="panel-head"><h3>Suppliers</h3><button class="btn small" id="add-supplier-btn">+ Add supplier</button></div>
       ${state.suppliers.length ? `
-        <table><thead><tr><th>Name</th><th>Phone</th></tr></thead>
-        <tbody>${state.suppliers.map((s) => `<tr><td data-label="Name">${s.name}</td><td data-label="Phone">${s.phone || '—'}</td></tr>`).join('')}</tbody></table>
+        <table><thead><tr><th>Name</th><th>Phone</th><th></th></tr></thead>
+        <tbody>${state.suppliers.map((s) => `
+          <tr>
+            <td data-label="Name">${s.name}</td>
+            <td data-label="Phone">${s.phone || '—'}</td>
+            <td data-label=""><button class="btn secondary small" onclick="editSupplier('${s.id}')">Edit</button></td>
+          </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">No suppliers yet.</div>`}
     </div>
     <div class="panel">
       <div class="panel-head"><h3>Purchases</h3><button class="btn small" id="add-purchase-btn">+ Record purchase</button></div>
       ${purchases.length ? `
-        <table><thead><tr><th>Date</th><th>Supplier</th><th>Items</th><th>Total</th></tr></thead>
+        <table><thead><tr><th>Date</th><th>Supplier</th><th>Items</th><th>Total</th><th></th></tr></thead>
         <tbody>${purchases.map((p) => `
           <tr>
             <td data-label="Date">${new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
             <td data-label="Supplier">${p.supplierName}</td>
             <td data-label="Items">${p.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
             <td data-label="Total" class="mono">${money(p.total)}</td>
+            <td data-label=""><button class="btn secondary small" onclick="deletePurchase('${p.id}')">Delete</button></td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">No purchases recorded yet.</div>`}
     </div>
   `;
 
-  document.getElementById('add-supplier-btn').addEventListener('click', () => {
-    showModal(`
-      <h3>Add supplier</h3>
-      <form id="supplier-form">
-        <label>Name<input required id="sup-name" /></label>
-        <label>Phone<input id="sup-phone" /></label>
-        <div class="modal-actions">
-          <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-          <button type="submit" class="btn">Add supplier</button>
-        </div>
-      </form>
-    `);
-    document.getElementById('supplier-form').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      await db.collection('suppliers').add({
-        name: document.getElementById('sup-name').value.trim(),
-        phone: document.getElementById('sup-phone').value.trim(),
-      });
-      toast('Supplier added');
-      closeModal();
-    });
-  });
-
+  document.getElementById('add-supplier-btn').addEventListener('click', () => openSupplierModal());
   document.getElementById('add-purchase-btn').addEventListener('click', openPurchaseModal);
 }
+
+function openSupplierModal(existing) {
+  const isEdit = !!existing;
+  const s = existing || { name: '', phone: '' };
+  showModal(`
+    <h3>${isEdit ? 'Edit supplier' : 'Add supplier'}</h3>
+    <form id="supplier-form">
+      <label>Name<input required id="sup-name" value="${s.name}" /></label>
+      <label>Phone<input id="sup-phone" value="${s.phone || ''}" /></label>
+      <div class="modal-actions">
+        ${isEdit ? `<button type="button" class="btn danger" id="sup-delete">Delete</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add supplier'}</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('supplier-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const data = {
+      name: document.getElementById('sup-name').value.trim(),
+      phone: document.getElementById('sup-phone').value.trim(),
+    };
+    if (isEdit) {
+      await db.collection('suppliers').doc(existing.id).update(data);
+      toast('Supplier updated');
+    } else {
+      await db.collection('suppliers').add(data);
+      toast('Supplier added');
+    }
+    closeModal();
+  });
+  if (isEdit) {
+    document.getElementById('sup-delete').addEventListener('click', async () => {
+      if (!confirm(`Delete supplier "${s.name}"? Past purchases will keep showing their recorded name.`)) return;
+      await db.collection('suppliers').doc(existing.id).delete();
+      toast('Supplier deleted');
+      closeModal();
+    });
+  }
+}
+
+window.editSupplier = (id) => {
+  const s = state.suppliers.find((x) => x.id === id);
+  if (s) openSupplierModal(s);
+};
+
+window.deletePurchase = async (id) => {
+  const p = state.purchases.find((x) => x.id === id);
+  if (!p) return;
+  if (!confirm(`Delete this purchase from ${p.supplierName}? Stock added by it will be reversed.`)) return;
+  const batch = db.batch();
+  batch.delete(db.collection('purchases').doc(p.id));
+  p.items.forEach((i) => {
+    const prod = state.products.find((x) => x.id === i.productId);
+    if (prod) batch.update(db.collection('products').doc(i.productId), { stock: Math.max(prod.stock - i.qty, 0) });
+  });
+  await batch.commit();
+  toast('Purchase deleted');
+};
 
 function openPurchaseModal() {
   if (!state.suppliers.length) { toast('Add a supplier first'); return; }
