@@ -28,6 +28,13 @@ function crateBreakdown(pcs, perCrate) {
   return `${crates} crate${crates !== 1 ? 's' : ''} + ${rem} pcs`;
 }
 
+// Splits raw pcs into { crates, pcs } separately, using the product's crate size.
+function splitCratesPcs(pcs, perCrate) {
+  const size = Number(perCrate) > 0 ? Number(perCrate) : null;
+  if (!size) return { crates: null, pcs };
+  return { crates: Math.floor(pcs / size), pcs: pcs % size };
+}
+
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -230,16 +237,21 @@ function renderInventory() {
     </div>
     <div class="panel">
       <div class="panel-head"><h3>Products</h3><button class="btn small" id="add-product-btn">+ Add product</button></div>
-      <table><thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Cost</th><th>Sale price</th><th></th></tr></thead>
-      <tbody>${activeProducts.map((p) => `
+      <table><thead><tr><th>Name</th><th>Category</th><th>Crates</th><th>Pcs</th><th>Cost</th><th>Sale price</th><th></th></tr></thead>
+      <tbody>${activeProducts.map((p) => {
+        const split = splitCratesPcs(p.stock, p.unitsPerCrate);
+        const low = p.stock <= (p.lowStockAt ?? 5);
+        return `
         <tr>
           <td data-label="Name">${p.name}</td>
           <td data-label="Category">${p.category || '—'}</td>
-          <td data-label="Stock" class="mono">${p.stock <= (p.lowStockAt ?? 5) ? `<span class="pill warn">${crateBreakdown(p.stock, p.unitsPerCrate)}</span>` : crateBreakdown(p.stock, p.unitsPerCrate)}</td>
+          <td data-label="Crates" class="mono">${split.crates === null ? '—' : (low ? `<span class="pill warn">${split.crates}</span>` : split.crates)}</td>
+          <td data-label="Pcs" class="mono">${low && split.crates === null ? `<span class="pill warn">${split.pcs}</span>` : split.pcs}</td>
           <td data-label="Cost" class="mono">${money(p.costPrice)}</td>
           <td data-label="Sale price" class="mono">${money(p.salePrice)}</td>
           <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
-        </tr>`).join('')}</tbody></table>
+        </tr>`;
+      }).join('')}</tbody></table>
     </div>
   `;
   document.getElementById('add-product-btn').addEventListener('click', () => openProductModal());
