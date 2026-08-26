@@ -141,6 +141,7 @@ input,select{font-family:inherit;}
 .nav-item.active{background:rgba(201,124,46,0.18); color:#fff;}
 .nav-item.active .dot{background:var(--amber); transform:scale(1.3);}
 .nav-item.logout{margin-top:auto; color:#B9C4BE;}
+.app-version{text-align:center; font-size:11px; color:#5F7A70; padding:6px 0 2px;}
 
 .main{flex:1; min-width:0; display:flex; flex-direction:column;}
 .topbar{
