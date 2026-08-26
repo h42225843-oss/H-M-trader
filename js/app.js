@@ -789,7 +789,11 @@ function purchaseLineRow() {
    Modal helper
    ============================================================ */
 function showModal(innerHtml) {
-  closeModal();
+  // Remove any leftover modal instantly first — guarantees only one ever exists,
+  // so a fast-opened new modal can never get mixed up with a closing old one.
+  const stale = document.getElementById('modal-overlay');
+  if (stale) stale.remove();
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.id = 'modal-overlay';
@@ -804,7 +808,10 @@ function closeModal() {
   const existing = document.getElementById('modal-overlay');
   if (existing) {
     existing.classList.add('closing');
-    setTimeout(() => existing.remove(), 160);
+    setTimeout(() => {
+      // Only remove if it's still the same element (a newer modal may have already replaced it)
+      if (existing.parentNode) existing.remove();
+    }, 160);
   }
 }
 
