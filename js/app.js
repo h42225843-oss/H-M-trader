@@ -278,23 +278,20 @@ function renderInventory() {
 function openProductModal(existing) {
   const isEdit = !!existing;
   const p = existing || { name: '', category: '', stock: 0, unit: 'pcs', unitsPerCrate: '', costPrice: '', salePrice: '', lowStockAt: 5 };
-  const initialCrates = p.unitsPerCrate ? Math.floor(p.stock / p.unitsPerCrate) : '';
-  const initialExtraPcs = p.unitsPerCrate ? p.stock % p.unitsPerCrate : p.stock;
+  const initialCrates = p.unitsPerCrate ? Math.floor(p.stock / p.unitsPerCrate) : 0;
+  const initialPcs = p.unitsPerCrate ? p.stock % p.unitsPerCrate : p.stock;
 
   showModal(`
     <h3>${isEdit ? 'Edit product' : 'Add product'}</h3>
     <form id="product-form">
       <label>Product name<input required id="p-name" value="${p.name}" placeholder="e.g. 500ml Water Bottle" /></label>
       <label>Category<input id="p-category" value="${p.category}" placeholder="e.g. Water, Juice, Glass" /></label>
-      <label>Pieces per crate <span style="font-weight:400;">(leave blank if sold loose, not by the crate)</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
 
-      <div id="stock-crate-fields" class="line-item-row" style="grid-template-columns:1fr 1fr; display:${p.unitsPerCrate ? 'grid' : 'none'};">
-        <label style="margin:0;">Crates<input type="number" id="p-crates" value="${initialCrates}" min="0" /></label>
-        <label style="margin:0;">Extra pcs<input type="number" id="p-extrapcs" value="${initialExtraPcs}" min="0" /></label>
+      <div class="line-item-row" style="grid-template-columns:1fr 1fr;">
+        <label style="margin:0;">Total Crates<input type="number" id="p-crates" value="${initialCrates}" min="0" /></label>
+        <label style="margin:0;">Total Pcs<input type="number" id="p-pcs" value="${initialPcs}" min="0" /></label>
       </div>
-      <div id="stock-loose-field" style="display:${p.unitsPerCrate ? 'none' : 'block'};">
-        <label>Current stock (pcs)<input type="number" id="p-stock-loose" value="${p.unitsPerCrate ? '' : p.stock}" /></label>
-      </div>
+      <label>Pieces per crate <span style="font-weight:400;">— how many pcs make up 1 crate (leave blank if sold loose only)</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
 
       <label>Low stock alert at (pcs)<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
       <label>Cost price (per pc)<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
@@ -307,40 +304,14 @@ function openProductModal(existing) {
     </form>
   `);
 
-  const perCrateInput = document.getElementById('p-percrate');
-  const crateFields = document.getElementById('stock-crate-fields');
-  const looseField = document.getElementById('stock-loose-field');
-  perCrateInput.addEventListener('input', () => {
-    const hasCrateSize = Number(perCrateInput.value) > 0;
-    crateFields.style.display = hasCrateSize ? 'grid' : 'none';
-    looseField.style.display = hasCrateSize ? 'none' : 'block';
-  });
-
-  // Keep "Extra pcs" always smaller than the crate size — auto-roll any overflow into whole crates,
-  // so what's on screen always matches what gets saved (no silent renormalizing after save).
-  const cratesInput = document.getElementById('p-crates');
-  const extraPcsInput = document.getElementById('p-extrapcs');
-  function normalizeCrateFields() {
-    const size = Number(perCrateInput.value) || 0;
-    if (size <= 0) return;
-    let crates = Number(cratesInput.value) || 0;
-    let extra = Number(extraPcsInput.value) || 0;
-    if (extra >= size || extra < 0) {
-      crates += Math.floor(extra / size);
-      extra = extra % size;
-      cratesInput.value = crates;
-      extraPcsInput.value = extra;
-    }
-  }
-  extraPcsInput.addEventListener('change', normalizeCrateFields);
   document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const reEnable = guardDoubleSubmit(e.target);
     if (!reEnable) return; // already submitting
-    const perCrate = Number(perCrateInput.value) || null;
-    const stock = perCrate
-      ? (Number(document.getElementById('p-crates').value) || 0) * perCrate + (Number(document.getElementById('p-extrapcs').value) || 0)
-      : (Number(document.getElementById('p-stock-loose').value) || 0);
+    const perCrate = Number(document.getElementById('p-percrate').value) || null;
+    const crates = Number(document.getElementById('p-crates').value) || 0;
+    const looseP = Number(document.getElementById('p-pcs').value) || 0;
+    const stock = perCrate ? (crates * perCrate + looseP) : looseP;
     const data = {
       name: document.getElementById('p-name').value.trim(),
       category: document.getElementById('p-category').value.trim(),
