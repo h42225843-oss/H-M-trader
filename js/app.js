@@ -266,13 +266,24 @@ function renderInventory() {
 function openProductModal(existing) {
   const isEdit = !!existing;
   const p = existing || { name: '', category: '', stock: 0, unit: 'pcs', unitsPerCrate: '', costPrice: '', salePrice: '', lowStockAt: 5 };
+  const initialCrates = p.unitsPerCrate ? Math.floor(p.stock / p.unitsPerCrate) : '';
+  const initialExtraPcs = p.unitsPerCrate ? p.stock % p.unitsPerCrate : p.stock;
+
   showModal(`
     <h3>${isEdit ? 'Edit product' : 'Add product'}</h3>
     <form id="product-form">
       <label>Product name<input required id="p-name" value="${p.name}" placeholder="e.g. 500ml Water Bottle" /></label>
       <label>Category<input id="p-category" value="${p.category}" placeholder="e.g. Water, Juice, Glass" /></label>
-      <label>Current stock (in pcs)<input required type="number" id="p-stock" value="${p.stock}" /></label>
-      <label>Pieces per crate <span style="font-weight:400;">(leave blank if sold loose)</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
+      <label>Pieces per crate <span style="font-weight:400;">(leave blank if sold loose, not by the crate)</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
+
+      <div id="stock-crate-fields" class="line-item-row" style="grid-template-columns:1fr 1fr; display:${p.unitsPerCrate ? 'grid' : 'none'};">
+        <label style="margin:0;">Crates<input type="number" id="p-crates" value="${initialCrates}" min="0" /></label>
+        <label style="margin:0;">Extra pcs<input type="number" id="p-extrapcs" value="${initialExtraPcs}" min="0" /></label>
+      </div>
+      <div id="stock-loose-field" style="display:${p.unitsPerCrate ? 'none' : 'block'};">
+        <label>Current stock (pcs)<input type="number" id="p-stock-loose" value="${p.unitsPerCrate ? '' : p.stock}" /></label>
+      </div>
+
       <label>Low stock alert at (pcs)<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
       <label>Cost price (per pc)<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
       <label>Sale price (per pc)<input required type="number" id="p-sale" value="${p.salePrice}" /></label>
@@ -284,14 +295,27 @@ function openProductModal(existing) {
     </form>
   `);
 
+  const perCrateInput = document.getElementById('p-percrate');
+  const crateFields = document.getElementById('stock-crate-fields');
+  const looseField = document.getElementById('stock-loose-field');
+  perCrateInput.addEventListener('input', () => {
+    const hasCrateSize = Number(perCrateInput.value) > 0;
+    crateFields.style.display = hasCrateSize ? 'grid' : 'none';
+    looseField.style.display = hasCrateSize ? 'none' : 'block';
+  });
+
   document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const perCrate = Number(perCrateInput.value) || null;
+    const stock = perCrate
+      ? (Number(document.getElementById('p-crates').value) || 0) * perCrate + (Number(document.getElementById('p-extrapcs').value) || 0)
+      : (Number(document.getElementById('p-stock-loose').value) || 0);
     const data = {
       name: document.getElementById('p-name').value.trim(),
       category: document.getElementById('p-category').value.trim(),
       unit: 'pcs',
-      stock: Number(document.getElementById('p-stock').value),
-      unitsPerCrate: Number(document.getElementById('p-percrate').value) || null,
+      stock,
+      unitsPerCrate: perCrate,
       lowStockAt: Number(document.getElementById('p-lowstock').value) || 5,
       costPrice: Number(document.getElementById('p-cost').value),
       salePrice: Number(document.getElementById('p-sale').value),
