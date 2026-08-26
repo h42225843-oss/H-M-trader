@@ -42,6 +42,18 @@ function toast(msg) {
   setTimeout(() => t.classList.remove('show'), 2200);
 }
 
+// Prevents duplicate saves: disables a form's submit button the instant it's
+// submitted, so a slow connection + an impatient second tap can't double-save.
+function guardDoubleSubmit(form) {
+  const btn = form.querySelector('button[type="submit"]');
+  if (!btn) return () => {};
+  if (btn.disabled) return null; // already submitting — caller should abort
+  const original = btn.textContent;
+  btn.disabled = true;
+  btn.textContent = 'Saving…';
+  return () => { btn.disabled = false; btn.textContent = original; }; // call on error to re-enable
+}
+
 /* ---------------- Auth ---------------- */
 const splashEl = document.getElementById('splash');
 const loginScreen = document.getElementById('login-screen');
@@ -306,6 +318,8 @@ function openProductModal(existing) {
 
   document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return; // already submitting
     const perCrate = Number(perCrateInput.value) || null;
     const stock = perCrate
       ? (Number(document.getElementById('p-crates').value) || 0) * perCrate + (Number(document.getElementById('p-extrapcs').value) || 0)
@@ -320,14 +334,19 @@ function openProductModal(existing) {
       costPrice: Number(document.getElementById('p-cost').value),
       salePrice: Number(document.getElementById('p-sale').value),
     };
-    if (isEdit) {
-      await db.collection('products').doc(existing.id).update(data);
-      toast('Product updated');
-    } else {
-      await db.collection('products').add(data);
-      toast('Product added');
+    try {
+      if (isEdit) {
+        await db.collection('products').doc(existing.id).update(data);
+        toast('Product updated');
+      } else {
+        await db.collection('products').add(data);
+        toast('Product added');
+      }
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
     }
-    closeModal();
   });
 
   if (isEdit) {
@@ -408,6 +427,8 @@ function openSaleModal() {
 
   document.getElementById('sale-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
     const rows = [...document.querySelectorAll('.line-item-row')];
     const items = rows.map((r) => {
       const productId = r.querySelector('.li-product').value;
@@ -416,12 +437,12 @@ function openSaleModal() {
       return { productId, name: p.name, qty, price: p.salePrice, lineTotal: p.salePrice * qty };
     }).filter((i) => i.productId && i.qty > 0);
 
-    if (!items.length) { toast('Add at least one valid item'); return; }
+    if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
 
     // check stock
     for (const item of items) {
       const p = state.products.find((x) => x.id === item.productId);
-      if (item.qty > p.stock) { toast(`Not enough stock for ${p.name}`); return; }
+      if (item.qty > p.stock) { toast(`Not enough stock for ${p.name}`); reEnable(); return; }
     }
 
     const total = items.reduce((a, i) => a + i.lineTotal, 0);
@@ -446,9 +467,14 @@ function openSaleModal() {
     if (customer && due > 0) {
       batch.update(db.collection('customers').doc(customer.id), { totalDue: (customer.totalDue || 0) + due });
     }
-    await batch.commit();
-    toast('Sale recorded');
-    closeModal();
+    try {
+      await batch.commit();
+      toast('Sale recorded');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
   });
 }
 
@@ -484,6 +510,8 @@ window.editSale = (id) => {
 
   document.getElementById('edit-sale-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
     const newPaid = Number(document.getElementById('es-paid').value) || 0;
     const newDue = Math.max(s.total - newPaid, 0);
     const dueDelta = newDue - s.due;
@@ -493,9 +521,14 @@ window.editSale = (id) => {
       const customer = state.customers.find((c) => c.id === s.customerId);
       if (customer) batch.update(db.collection('customers').doc(customer.id), { totalDue: (customer.totalDue || 0) + dueDelta });
     }
-    await batch.commit();
-    toast('Sale updated');
-    closeModal();
+    try {
+      await batch.commit();
+      toast('Sale updated');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
   });
 
   document.getElementById('es-delete').addEventListener('click', async () => {
@@ -559,18 +592,25 @@ function openCustomerModal(existing) {
   `);
   document.getElementById('customer-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
     const data = {
       name: document.getElementById('c-name').value.trim(),
       phone: document.getElementById('c-phone').value.trim(),
     };
-    if (isEdit) {
-      await db.collection('customers').doc(existing.id).update(data);
-      toast('Customer updated');
-    } else {
-      await db.collection('customers').add({ ...data, totalDue: 0 });
-      toast('Customer added');
+    try {
+      if (isEdit) {
+        await db.collection('customers').doc(existing.id).update(data);
+        toast('Customer updated');
+      } else {
+        await db.collection('customers').add({ ...data, totalDue: 0 });
+        toast('Customer added');
+      }
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
     }
-    closeModal();
   });
   if (isEdit) {
     document.getElementById('c-delete').addEventListener('click', async () => {
@@ -603,11 +643,18 @@ window.openPaymentModal = (customerId) => {
   `);
   document.getElementById('payment-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
     const amt = Number(document.getElementById('pay-amount').value);
-    if (amt <= 0 || amt > c.totalDue) { toast('Enter a valid amount'); return; }
-    await db.collection('customers').doc(c.id).update({ totalDue: c.totalDue - amt });
-    toast('Payment recorded');
-    closeModal();
+    if (amt <= 0 || amt > c.totalDue) { toast('Enter a valid amount'); reEnable(); return; }
+    try {
+      await db.collection('customers').doc(c.id).update({ totalDue: c.totalDue - amt });
+      toast('Payment recorded');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
   });
 };
 
@@ -667,18 +714,25 @@ function openSupplierModal(existing) {
   `);
   document.getElementById('supplier-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
     const data = {
       name: document.getElementById('sup-name').value.trim(),
       phone: document.getElementById('sup-phone').value.trim(),
     };
-    if (isEdit) {
-      await db.collection('suppliers').doc(existing.id).update(data);
-      toast('Supplier updated');
-    } else {
-      await db.collection('suppliers').add(data);
-      toast('Supplier added');
+    try {
+      if (isEdit) {
+        await db.collection('suppliers').doc(existing.id).update(data);
+        toast('Supplier updated');
+      } else {
+        await db.collection('suppliers').add(data);
+        toast('Supplier added');
+      }
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
     }
-    closeModal();
   });
   if (isEdit) {
     document.getElementById('sup-delete').addEventListener('click', async () => {
@@ -738,6 +792,8 @@ function openPurchaseModal() {
 
   document.getElementById('purchase-form').addEventListener('submit', async (e) => {
     e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
     const rows = [...document.querySelectorAll('#purchase-line-items .line-item-row')];
     const items = rows.map((r) => {
       const productId = r.querySelector('.li-product').value;
@@ -747,7 +803,7 @@ function openPurchaseModal() {
       return { productId, name: p.name, qty, costEach, lineTotal: qty * costEach };
     }).filter((i) => i.productId && i.qty > 0);
 
-    if (!items.length) { toast('Add at least one valid item'); return; }
+    if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
 
     const supplierId = document.getElementById('pu-supplier').value;
     const supplier = state.suppliers.find((s) => s.id === supplierId);
@@ -765,9 +821,14 @@ function openPurchaseModal() {
         costPrice: i.costEach, // keep cost price current
       });
     });
-    await batch.commit();
-    toast('Purchase recorded, stock updated');
-    closeModal();
+    try {
+      await batch.commit();
+      toast('Purchase recorded, stock updated');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
   });
 }
 
