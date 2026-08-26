@@ -10,6 +10,7 @@ const state = {
   sales: [],
   purchases: [],
   view: 'dashboard',
+  inventoryTab: 'All',
 };
 
 const money = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
@@ -185,24 +186,69 @@ function renderDashboard() {
    ============================================================ */
 function renderInventory() {
   const el = document.getElementById('view-inventory');
+
+  if (!state.products.length) {
+    el.innerHTML = `
+      <div class="panel">
+        <div class="panel-head"><h3>Products</h3><button class="btn small" id="add-product-btn">+ Add product</button></div>
+        <div class="empty-state">No products yet. Add your first bottle product to get started.</div>
+      </div>
+    `;
+    document.getElementById('add-product-btn').addEventListener('click', () => openProductModal());
+    return;
+  }
+
+  // Group products by category (e.g. different companies/brands)
+  const groups = {};
+  state.products.forEach((p) => {
+    const key = p.category?.trim() || 'Uncategorized';
+    if (!groups[key]) groups[key] = [];
+    groups[key].push(p);
+  });
+  const categoryNames = Object.keys(groups).sort();
+  if (!state.inventoryTab || !categoryNames.includes(state.inventoryTab)) {
+    state.inventoryTab = 'All';
+  }
+
+  function categoryTotals(products) {
+    const pcs = products.reduce((a, p) => a + (p.stock || 0), 0);
+    const crates = products.reduce((a, p) => p.unitsPerCrate ? a + Math.floor((p.stock || 0) / p.unitsPerCrate) : a, 0);
+    return { pcs, crates };
+  }
+
+  const tabs = ['All', ...categoryNames];
+  const activeProducts = state.inventoryTab === 'All' ? state.products : groups[state.inventoryTab];
+  const t = categoryTotals(activeProducts);
+
   el.innerHTML = `
+    <div class="category-tabs">
+      ${tabs.map((cat) => `<button class="cat-tab ${cat === state.inventoryTab ? 'active' : ''}" data-cat="${cat}">${cat}</button>`).join('')}
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:18px;">
+      <div class="stat-card"><div class="label">${state.inventoryTab} — Crates</div><div class="value">${t.crates}</div></div>
+      <div class="stat-card"><div class="label">${state.inventoryTab} — Pcs</div><div class="value">${t.pcs}</div></div>
+    </div>
     <div class="panel">
       <div class="panel-head"><h3>Products</h3><button class="btn small" id="add-product-btn">+ Add product</button></div>
-      ${state.products.length ? `
-        <table><thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Cost</th><th>Sale price</th><th></th></tr></thead>
-        <tbody>${state.products.map((p) => `
-          <tr>
-            <td data-label="Name">${p.name}</td>
-            <td data-label="Category">${p.category || '—'}</td>
-            <td data-label="Stock" class="mono">${p.stock <= (p.lowStockAt ?? 5) ? `<span class="pill warn">${crateBreakdown(p.stock, p.unitsPerCrate)}</span>` : crateBreakdown(p.stock, p.unitsPerCrate)}</td>
-            <td data-label="Cost" class="mono">${money(p.costPrice)}</td>
-            <td data-label="Sale price" class="mono">${money(p.salePrice)}</td>
-            <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
-          </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No products yet. Add your first bottle product to get started.</div>`}
+      <table><thead><tr><th>Name</th><th>Category</th><th>Stock</th><th>Cost</th><th>Sale price</th><th></th></tr></thead>
+      <tbody>${activeProducts.map((p) => `
+        <tr>
+          <td data-label="Name">${p.name}</td>
+          <td data-label="Category">${p.category || '—'}</td>
+          <td data-label="Stock" class="mono">${p.stock <= (p.lowStockAt ?? 5) ? `<span class="pill warn">${crateBreakdown(p.stock, p.unitsPerCrate)}</span>` : crateBreakdown(p.stock, p.unitsPerCrate)}</td>
+          <td data-label="Cost" class="mono">${money(p.costPrice)}</td>
+          <td data-label="Sale price" class="mono">${money(p.salePrice)}</td>
+          <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
+        </tr>`).join('')}</tbody></table>
     </div>
   `;
   document.getElementById('add-product-btn').addEventListener('click', () => openProductModal());
+  document.querySelectorAll('.cat-tab').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      state.inventoryTab = btn.dataset.cat;
+      renderInventory();
+    });
+  });
 }
 
 function openProductModal(existing) {
