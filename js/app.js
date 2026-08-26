@@ -898,4 +898,13 @@ if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
     navigator.serviceWorker.register('service-worker.js').catch(() => {});
   });
+
+  // Auto-refresh: whenever a newer version of the app takes over, reload once
+  // automatically so the app never gets stuck showing an old cached version.
+  let hasReloaded = false;
+  navigator.serviceWorker.addEventListener('controllerchange', () => {
+    if (hasReloaded) return;
+    hasReloaded = true;
+    window.location.reload();
+  });
 }
