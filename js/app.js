@@ -316,6 +316,23 @@ function openProductModal(existing) {
     looseField.style.display = hasCrateSize ? 'none' : 'block';
   });
 
+  // Keep "Extra pcs" always smaller than the crate size — auto-roll any overflow into whole crates,
+  // so what's on screen always matches what gets saved (no silent renormalizing after save).
+  const cratesInput = document.getElementById('p-crates');
+  const extraPcsInput = document.getElementById('p-extrapcs');
+  function normalizeCrateFields() {
+    const size = Number(perCrateInput.value) || 0;
+    if (size <= 0) return;
+    let crates = Number(cratesInput.value) || 0;
+    let extra = Number(extraPcsInput.value) || 0;
+    if (extra >= size || extra < 0) {
+      crates += Math.floor(extra / size);
+      extra = extra % size;
+      cratesInput.value = crates;
+      extraPcsInput.value = extra;
+    }
+  }
+  extraPcsInput.addEventListener('change', normalizeCrateFields);
   document.getElementById('product-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const reEnable = guardDoubleSubmit(e.target);
