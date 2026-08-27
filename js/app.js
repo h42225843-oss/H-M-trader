@@ -35,6 +35,23 @@ function splitCratesPcs(pcs, perCrate) {
   return { crates: Math.floor(pcs / size), pcs: pcs % size };
 }
 
+// Formats an invoice sequence number like "INV-0007"
+function formatInvoice(n) {
+  return `INV-${String(n).padStart(4, '0')}`;
+}
+
+// Atomically reserves the next invoice number using a Firestore transaction,
+// so two sales recorded at nearly the same time never collide.
+async function getNextInvoiceNo() {
+  const counterRef = db.collection('meta').doc('counters');
+  return db.runTransaction(async (tx) => {
+    const doc = await tx.get(counterRef);
+    const current = doc.exists ? (doc.data().nextInvoiceNo || 1) : 1;
+    tx.set(counterRef, { nextInvoiceNo: current + 1 }, { merge: true });
+    return current;
+  });
+}
+
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -166,11 +183,41 @@ function renderDashboard() {
   const lowStock = state.products.filter((p) => p.stock <= (p.lowStockAt ?? 5));
   const stockValue = state.products.reduce((a, p) => a + p.stock * p.costPrice, 0);
   const totalPcs = state.products.reduce((a, p) => a + (p.stock || 0), 0);
-  // Total crates = sum of full crates across all products that have a crate size set.
   const totalCrates = state.products.reduce((a, p) => {
     if (!p.unitsPerCrate) return a;
     return a + Math.floor((p.stock || 0) / p.unitsPerCrate);
   }, 0);
+
+  // This week's total sales (last 7 days including today)
+  const weekAgo = new Date();
+  weekAgo.setDate(weekAgo.getDate() - 6);
+  weekAgo.setHours(0, 0, 0, 0);
+  const weekSales = state.sales.filter((s) => new Date(s.date) >= weekAgo);
+  const weekTotal = weekSales.reduce((a, s) => a + s.total, 0);
+
+  // Total profit — uses each product's current cost price as an estimate
+  const totalProfit = state.sales.reduce((a, s) => {
+    const saleProfit = s.items.reduce((sa, i) => {
+      const p = state.products.find((x) => x.id === i.productId);
+      const cost = p ? p.costPrice : 0;
+      return sa + (i.price - cost) * i.qty;
+    }, 0);
+    return a + saleProfit;
+  }, 0);
+
+  // Average sale value (all-time)
+  const avgSale = state.sales.length ? state.sales.reduce((a, s) => a + s.total, 0) / state.sales.length : 0;
+
+  // Top-selling product by quantity across all sales
+  const qtyByProduct = {};
+  state.sales.forEach((s) => s.items.forEach((i) => {
+    qtyByProduct[i.name] = (qtyByProduct[i.name] || 0) + i.qty;
+  }));
+  const topProductEntry = Object.entries(qtyByProduct).sort((a, b) => b[1] - a[1])[0];
+  const topProductLabel = topProductEntry ? `${topProductEntry[0]} (${topProductEntry[1]} sold)` : '—';
+
+  const recentSales = state.sales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
+  const recentSalesTotal = recentSales.reduce((a, s) => a + s.total, 0);
 
   el.innerHTML = `
     <div class="stat-grid">
@@ -180,6 +227,12 @@ function renderDashboard() {
       <div class="stat-card"><div class="label">Stock Value</div><div class="value">${money(stockValue)}</div></div>
       <div class="stat-card"><div class="label">Total Crates</div><div class="value">${totalCrates}</div></div>
       <div class="stat-card"><div class="label">Total Pcs</div><div class="value">${totalPcs}</div></div>
+      <div class="stat-card"><div class="label">This Week's Sales</div><div class="value">${money(weekTotal)}</div></div>
+      <div class="stat-card"><div class="label">Total Profit</div><div class="value">${money(totalProfit)}</div></div>
+      <div class="stat-card"><div class="label">Customers</div><div class="value">${state.customers.length}</div></div>
+      <div class="stat-card"><div class="label">Suppliers</div><div class="value">${state.suppliers.length}</div></div>
+      <div class="stat-card"><div class="label">Average Sale Value</div><div class="value">${money(avgSale)}</div></div>
+      <div class="stat-card"><div class="label">Top-Selling Product</div><div class="value" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
     </div>
     <div class="panel">
       <div class="panel-head"><h3>Low Stock</h3></div>
@@ -194,8 +247,11 @@ function renderDashboard() {
       ` : `<div class="empty-state">Nothing running low right now.</div>`}
     </div>
     <div class="panel">
-      <div class="panel-head"><h3>Recent Sales</h3></div>
-      ${renderSalesTable(state.sales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6))}
+      <div class="panel-head">
+        <h3>Recent Sales</h3>
+        <span class="mono" style="font-size:13px; color:var(--muted);">${recentSales.length} shown · ${money(recentSalesTotal)} total</span>
+      </div>
+      ${renderSalesTable(recentSales)}
     </div>
   `;
 }
@@ -379,9 +435,10 @@ window.editProduct = (id) => {
 function renderSalesTable(sales) {
   if (!sales.length) return `<div class="empty-state">No sales recorded yet.</div>`;
   return `
-    <table><thead><tr><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+    <table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
     <tbody>${sales.map((s) => `
       <tr>
+        <td data-label="Invoice" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
         <td data-label="Date">${new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
         <td data-label="Customer">${s.customerName || 'Walk-in'}</td>
         <td data-label="Items">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
@@ -458,10 +515,12 @@ function openSaleModal() {
     const due = Math.max(total - paid, 0);
     const customerId = document.getElementById('s-customer').value;
     const customer = state.customers.find((c) => c.id === customerId);
+    const invoiceNo = await getNextInvoiceNo();
 
     const batch = db.batch();
     const saleRef = db.collection('sales').doc();
     batch.set(saleRef, {
+      invoiceNo,
       customerId: customerId || null,
       customerName: customer ? customer.name : 'Walk-in',
       items,
@@ -504,7 +563,7 @@ window.editSale = (id) => {
   const s = state.sales.find((x) => x.id === id);
   if (!s) return;
   showModal(`
-    <h3>Edit sale — ${s.customerName || 'Walk-in'}</h3>
+    <h3>Edit sale ${s.invoiceNo ? formatInvoice(s.invoiceNo) : ''} — ${s.customerName || 'Walk-in'}</h3>
     <p style="color:var(--muted); font-size:14px; margin:0;">Items: ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>Total: <strong class="mono">${money(s.total)}</strong></p>
     <form id="edit-sale-form">
       <label>Amount paid<input required type="number" id="es-paid" value="${s.paid}" /></label>
