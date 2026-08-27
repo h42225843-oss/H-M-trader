@@ -19,6 +19,7 @@ const state = {
 
 const money = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
 const todayStr = () => new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+const formatDateTime = (dateStr) => new Date(dateStr).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Formats a raw piece-count as "N crates + M pcs" using the product's crate size.
@@ -575,7 +576,7 @@ function renderSalesTable(sales) {
     <tbody>${sales.map((s) => `
       <tr>
         <td data-label="Invoice" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
-        <td data-label="Date">${new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+        <td data-label="Date">${formatDateTime(s.date)}</td>
         <td data-label="Customer">${s.customerName || 'Walk-in'}</td>
         <td data-label="Items">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
         <td data-label="Total" class="mono">${money(s.total)}</td>
@@ -931,7 +932,7 @@ function renderShopkeepers() {
         <tbody>${sales.map((s) => `
           <tr>
             <td data-label="Invoice" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
-            <td data-label="Date">${new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+            <td data-label="Date">${formatDateTime(s.date)}</td>
             <td data-label="Shopkeeper">${s.shopkeeperName}</td>
             <td data-label="Items">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
             <td data-label="Total" class="mono">${money(s.total)}</td>
