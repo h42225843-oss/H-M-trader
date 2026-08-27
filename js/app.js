@@ -133,7 +133,7 @@ function setView(view) {
   // eslint-disable-next-line no-unused-expressions
   void target.offsetWidth; // restart animation
   target.classList.add('view-enter');
-  const titles = { dashboard: 'Dashboard', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
+  const titles = { dashboard: 'Dashboard', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
   document.getElementById('view-title').textContent = titles[view];
   renderAll();
 }
@@ -165,10 +165,26 @@ function attachListeners() {
 
 function renderAll() {
   if (state.view === 'dashboard') renderDashboard();
+  if (state.view === 'recentsales') renderRecentSales();
   if (state.view === 'inventory') renderInventory();
   if (state.view === 'sales') renderSales();
   if (state.view === 'customers') renderCustomers();
   if (state.view === 'suppliers') renderSuppliers();
+}
+
+function renderRecentSales() {
+  const el = document.getElementById('view-recentsales');
+  const recent = state.sales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 25);
+  const recentTotal = recent.reduce((a, s) => a + s.total, 0);
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head">
+        <h3>Recent Sales</h3>
+        <span class="mono" style="font-size:13px; color:var(--muted);">${recent.length} shown · ${money(recentTotal)} total</span>
+      </div>
+      ${renderSalesTable(recent)}
+    </div>
+  `;
 }
 
 /* ============================================================
