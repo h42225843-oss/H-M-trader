@@ -133,7 +133,7 @@ function setView(view) {
   // eslint-disable-next-line no-unused-expressions
   void target.offsetWidth; // restart animation
   target.classList.add('view-enter');
-  const titles = { dashboard: 'Dashboard', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
+  const titles = { dashboard: 'Dashboard', lowstock: 'Low Stock', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
   document.getElementById('view-title').textContent = titles[view];
   renderAll();
 }
@@ -165,11 +165,33 @@ function attachListeners() {
 
 function renderAll() {
   if (state.view === 'dashboard') renderDashboard();
+  if (state.view === 'lowstock') renderLowStock();
   if (state.view === 'recentsales') renderRecentSales();
   if (state.view === 'inventory') renderInventory();
   if (state.view === 'sales') renderSales();
   if (state.view === 'customers') renderCustomers();
   if (state.view === 'suppliers') renderSuppliers();
+}
+
+function renderLowStock() {
+  const el = document.getElementById('view-lowstock');
+  const lowStock = state.products.filter((p) => p.stock <= (p.lowStockAt ?? 5));
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h3>Low Stock</h3></div>
+      ${lowStock.length ? `
+        <table><thead><tr><th>Product</th><th>Category</th><th>Stock left</th><th>Reorder at</th><th></th></tr></thead>
+        <tbody>${lowStock.map((p) => `
+          <tr>
+            <td data-label="Product">${p.name}</td>
+            <td data-label="Category">${p.category || '—'}</td>
+            <td data-label="Stock" class="mono">${crateBreakdown(p.stock, p.unitsPerCrate)}</td>
+            <td data-label="Reorder at" class="mono">${p.lowStockAt ?? 5} pcs</td>
+            <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
+          </tr>`).join('')}</tbody></table>
+      ` : `<div class="empty-state">Nothing running low right now.</div>`}
+    </div>
+  `;
 }
 
 function renderRecentSales() {
@@ -196,7 +218,6 @@ function renderDashboard() {
   const todaysSales = state.sales.filter((s) => new Date(s.date).toDateString() === todayKey);
   const todayTotal = todaysSales.reduce((a, s) => a + s.total, 0);
   const totalDue = state.customers.reduce((a, c) => a + (c.totalDue || 0), 0);
-  const lowStock = state.products.filter((p) => p.stock <= (p.lowStockAt ?? 5));
   const stockValue = state.products.reduce((a, p) => a + p.stock * p.costPrice, 0);
   const totalPcs = state.products.reduce((a, p) => a + (p.stock || 0), 0);
   const totalCrates = state.products.reduce((a, p) => {
@@ -247,18 +268,6 @@ function renderDashboard() {
       <div class="stat-card"><div class="label">Suppliers</div><div class="value">${state.suppliers.length}</div></div>
       <div class="stat-card"><div class="label">Average Sale Value</div><div class="value">${money(avgSale)}</div></div>
       <div class="stat-card"><div class="label">Top-Selling Product</div><div class="value" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><h3>Low Stock</h3></div>
-      ${lowStock.length ? `
-        <table><thead><tr><th>Product</th><th>Stock left</th><th>Reorder at</th></tr></thead>
-        <tbody>${lowStock.map((p) => `
-          <tr>
-            <td data-label="Product">${p.name}</td>
-            <td data-label="Stock" class="mono">${crateBreakdown(p.stock, p.unitsPerCrate)}</td>
-            <td data-label="Reorder at" class="mono">${p.lowStockAt ?? 5} pcs</td>
-          </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">Nothing running low right now.</div>`}
     </div>
   `;
 }
