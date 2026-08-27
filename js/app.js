@@ -747,7 +747,7 @@ window.editSale = (id) => {
   });
 };
 
-window.shareSaleWhatsApp = (id) => {
+window.shareSaleWhatsApp = async (id) => {
   const s = state.sales.find((x) => x.id === id);
   if (!s) return;
   const dateStr = new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
@@ -765,14 +765,26 @@ window.shareSaleWhatsApp = (id) => {
     '',
     'Thank you for your business!',
   ].filter(Boolean);
-  const message = encodeURIComponent(lines.join('\n'));
+  const text = lines.join('\n');
 
-  // If the customer has a saved phone number, open a chat with them directly;
-  // otherwise let the user pick who to send it to.
-  const customer = s.customerId ? state.customers.find((c) => c.id === s.customerId) : null;
-  const phone = customer && customer.phone ? customer.phone.replace(/[^0-9]/g, '') : '';
-  const url = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
-  window.open(url, '_blank');
+  // Prefer the phone's native "Share to…" sheet (WhatsApp, SMS, Email, etc.),
+  // same as sharing a photo from the Gallery.
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'H.M Traders Invoice', text });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return; // user cancelled the share sheet
+      // otherwise fall through to the WhatsApp link below
+    }
+  }
+
+  // Fallback (e.g. desktop browsers without native share support, or if native share
+  // failed for another reason): open WhatsApp's generic composer so the person can pick
+  // who to send it to themselves — never auto-target a stored number, since it may be
+  // test/placeholder data rather than a real contact.
+  const message = encodeURIComponent(text);
+  window.open(`https://wa.me/?text=${message}`, '_blank');
 };
 
 /* ============================================================
