@@ -756,7 +756,7 @@ function renderSuppliers() {
           <tr>
             <td data-label="Name">${s.name}</td>
             <td data-label="Phone">${s.phone || '—'}</td>
-            <td data-label=""><button class="btn secondary small" onclick="editSupplier('${s.id}')">Edit</button></td>
+            <td data-label=""><button class="btn secondary small" onclick="editSupplier('${s.id}')">Edit</button> <button class="btn danger small" onclick="deleteSupplier('${s.id}')">Delete</button></td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">No suppliers yet.</div>`}
     </div>
@@ -770,7 +770,7 @@ function renderSuppliers() {
             <td data-label="Supplier">${p.supplierName}</td>
             <td data-label="Items">${p.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
             <td data-label="Total" class="mono">${money(p.total)}</td>
-            <td data-label=""><button class="btn secondary small" onclick="deletePurchase('${p.id}')">Delete</button></td>
+            <td data-label=""><button class="btn secondary small" onclick="editPurchase('${p.id}')">Edit</button> <button class="btn danger small" onclick="deletePurchase('${p.id}')">Delete</button></td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">No purchases recorded yet.</div>`}
     </div>
@@ -832,6 +832,14 @@ window.editSupplier = (id) => {
   if (s) openSupplierModal(s);
 };
 
+window.deleteSupplier = async (id) => {
+  const s = state.suppliers.find((x) => x.id === id);
+  if (!s) return;
+  if (!confirm(`Delete supplier "${s.name}"? Past purchases will keep showing their recorded name.`)) return;
+  await db.collection('suppliers').doc(id).delete();
+  toast('Supplier deleted');
+};
+
 window.deletePurchase = async (id) => {
   const p = state.purchases.find((x) => x.id === id);
   if (!p) return;
@@ -846,25 +854,32 @@ window.deletePurchase = async (id) => {
   toast('Purchase deleted');
 };
 
-function openPurchaseModal() {
+window.editPurchase = (id) => {
+  const p = state.purchases.find((x) => x.id === id);
+  if (p) openPurchaseModal(p);
+};
+
+function openPurchaseModal(existing) {
+  const isEdit = !!existing;
   if (!state.suppliers.length) { toast('Add a supplier first'); return; }
   if (!state.products.length) { toast('Add a product first'); return; }
   showModal(`
-    <h3>Record purchase</h3>
+    <h3>${isEdit ? 'Edit purchase' : 'Record purchase'}</h3>
     <form id="purchase-form">
       <label>Supplier
         <select id="pu-supplier" required>
           <option value="">Select supplier…</option>
-          ${state.suppliers.map((s) => `<option value="${s.id}">${s.name}</option>`).join('')}
+          ${state.suppliers.map((s) => `<option value="${s.id}" ${isEdit && existing.supplierId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
         </select>
       </label>
       <div class="line-items" id="purchase-line-items">
-        ${purchaseLineRow()}
+        ${isEdit ? existing.items.map((i) => purchaseLineRow(i)).join('') : purchaseLineRow()}
       </div>
       <button type="button" class="btn secondary small" id="add-pline-btn" style="align-self:flex-start;">+ Add another item</button>
       <div class="modal-actions">
+        ${isEdit ? `<button type="button" class="btn danger" id="pu-delete">Delete</button>` : ''}
         <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save purchase</button>
+        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Save purchase'}</button>
       </div>
     </form>
   `);
@@ -873,6 +888,13 @@ function openPurchaseModal() {
     document.getElementById('purchase-line-items').insertAdjacentHTML('beforeend', purchaseLineRow());
   });
 
+  if (isEdit) {
+    document.getElementById('pu-delete').addEventListener('click', () => {
+      closeModal();
+      deletePurchase(existing.id);
+    });
+  }
+
   document.getElementById('purchase-form').addEventListener('submit', async (e) => {
     e.preventDefault();
     const reEnable = guardDoubleSubmit(e.target);
@@ -880,11 +902,14 @@ function openPurchaseModal() {
     const rows = [...document.querySelectorAll('#purchase-line-items .line-item-row')];
     const items = rows.map((r) => {
       const productId = r.querySelector('.li-product').value;
-      const qty = Number(r.querySelector('.li-qty').value);
-      const costEach = Number(r.querySelector('.li-cost').value);
       const p = state.products.find((x) => x.id === productId);
+      if (!p) return null;
+      const crates = Number(r.querySelector('.li-crates').value) || 0;
+      const looseP = Number(r.querySelector('.li-pcs').value) || 0;
+      const qty = p.unitsPerCrate ? (crates * p.unitsPerCrate + looseP) : looseP;
+      const costEach = Number(r.querySelector('.li-cost').value);
       return { productId, name: p.name, qty, costEach, lineTotal: qty * costEach };
-    }).filter((i) => i.productId && i.qty > 0);
+    }).filter((i) => i && i.productId && i.qty > 0);
 
     if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
 
@@ -892,21 +917,40 @@ function openPurchaseModal() {
     const supplier = state.suppliers.find((s) => s.id === supplierId);
     const total = items.reduce((a, i) => a + i.lineTotal, 0);
 
-    const batch = db.batch();
-    const purchaseRef = db.collection('purchases').doc();
-    batch.set(purchaseRef, {
-      supplierId, supplierName: supplier.name, items, total, date: new Date().toISOString(),
-    });
-    items.forEach((i) => {
-      const p = state.products.find((x) => x.id === i.productId);
-      batch.update(db.collection('products').doc(i.productId), {
-        stock: p.stock + i.qty,
-        costPrice: i.costEach, // keep cost price current
-      });
-    });
     try {
+      const batch = db.batch();
+      if (isEdit) {
+        // Net stock delta per product: remove what the old purchase added, then add what the new one adds.
+        const delta = {};
+        existing.items.forEach((i) => { delta[i.productId] = (delta[i.productId] || 0) - i.qty; });
+        items.forEach((i) => { delta[i.productId] = (delta[i.productId] || 0) + i.qty; });
+        Object.entries(delta).forEach(([productId, change]) => {
+          if (change === 0) return;
+          const p = state.products.find((x) => x.id === productId);
+          if (p) batch.update(db.collection('products').doc(productId), { stock: Math.max(p.stock + change, 0) });
+        });
+        // Keep cost price current for items still in the new list
+        items.forEach((i) => {
+          batch.update(db.collection('products').doc(i.productId), { costPrice: i.costEach });
+        });
+        batch.update(db.collection('purchases').doc(existing.id), {
+          supplierId, supplierName: supplier.name, items, total,
+        });
+      } else {
+        const purchaseRef = db.collection('purchases').doc();
+        batch.set(purchaseRef, {
+          supplierId, supplierName: supplier.name, items, total, date: new Date().toISOString(),
+        });
+        items.forEach((i) => {
+          const p = state.products.find((x) => x.id === i.productId);
+          batch.update(db.collection('products').doc(i.productId), {
+            stock: p.stock + i.qty,
+            costPrice: i.costEach,
+          });
+        });
+      }
       await batch.commit();
-      toast('Purchase recorded, stock updated');
+      toast(isEdit ? 'Purchase updated' : 'Purchase recorded, stock updated');
       closeModal();
     } catch (err) {
       reEnable();
@@ -915,15 +959,19 @@ function openPurchaseModal() {
   });
 }
 
-function purchaseLineRow() {
+function purchaseLineRow(existingItem) {
+  const selectedProductId = existingItem ? existingItem.productId : '';
+  const p = existingItem ? state.products.find((x) => x.id === existingItem.productId) : null;
+  const split = existingItem ? splitCratesPcs(existingItem.qty, p ? p.unitsPerCrate : null) : { crates: 0, pcs: 0 };
   return `
-    <div class="line-item-row">
+    <div class="line-item-row" style="grid-template-columns:1.6fr 0.7fr 0.7fr 0.8fr auto;">
       <select class="li-product">
         <option value="">Select product…</option>
-        ${state.products.map((p) => `<option value="${p.id}">${p.name}</option>`).join('')}
+        ${state.products.map((pr) => `<option value="${pr.id}" ${pr.id === selectedProductId ? 'selected' : ''}>${pr.name}${pr.unitsPerCrate ? ` (${pr.unitsPerCrate}/crate)` : ''}</option>`).join('')}
       </select>
-      <input class="li-qty" type="number" min="1" value="1" placeholder="Qty" />
-      <input class="li-cost" type="number" min="0" placeholder="Cost/unit" />
+      <input class="li-crates" type="number" min="0" value="${split.crates ?? 0}" placeholder="Crates" title="Crates" />
+      <input class="li-pcs" type="number" min="0" value="${split.pcs ?? 0}" placeholder="Pcs" title="Loose pcs" />
+      <input class="li-cost" type="number" min="0" value="${existingItem ? existingItem.costEach : ''}" placeholder="Cost/pc" />
       <button type="button" class="btn secondary small" onclick="this.closest('.line-item-row').remove()">✕</button>
     </div>
   `;
