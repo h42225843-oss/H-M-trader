@@ -227,6 +227,8 @@ tbody tr:hover{background:#FBFAF6;}
 .modal form{display:flex; flex-direction:column; gap:14px;}
 .modal label{font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:6px;}
 .modal input, .modal select{padding:10px 11px; border-radius:8px; border:1px solid var(--line); font-size:14.5px; background:var(--cream);}
+.panel input[type="date"], .panel select{padding:9px 10px; border-radius:8px; border:1px solid var(--line); font-size:14px; background:var(--cream);}
+.panel label{font-size:13px; color:var(--muted); display:flex; flex-direction:column; gap:5px;}
 .modal input:focus, .modal select:focus{outline:2px solid var(--green-mid); background:var(--paper);}
 .modal-actions{display:flex; gap:10px; justify-content:flex-end; margin-top:6px;}
 .line-items{display:flex; flex-direction:column; gap:10px; padding:12px; background:var(--cream); border-radius:8px;}

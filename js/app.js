@@ -11,6 +11,8 @@ const state = {
   purchases: [],
   view: 'dashboard',
   inventoryTab: 'All',
+  reportFrom: null,
+  reportTo: null,
 };
 
 const money = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
@@ -133,7 +135,7 @@ function setView(view) {
   // eslint-disable-next-line no-unused-expressions
   void target.offsetWidth; // restart animation
   target.classList.add('view-enter');
-  const titles = { dashboard: 'Dashboard', lowstock: 'Low Stock', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
+  const titles = { dashboard: 'Dashboard', reports: 'Reports', lowstock: 'Low Stock', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
   document.getElementById('view-title').textContent = titles[view];
   renderAll();
 }
@@ -165,6 +167,7 @@ function attachListeners() {
 
 function renderAll() {
   if (state.view === 'dashboard') renderDashboard();
+  if (state.view === 'reports') renderReports();
   if (state.view === 'lowstock') renderLowStock();
   if (state.view === 'recentsales') renderRecentSales();
   if (state.view === 'inventory') renderInventory();
@@ -192,6 +195,103 @@ function renderLowStock() {
       ` : `<div class="empty-state">Nothing running low right now.</div>`}
     </div>
   `;
+}
+
+function toDateInputValue(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function renderReports() {
+  const el = document.getElementById('view-reports');
+
+  // Default range: last 30 days, first time only
+  if (!state.reportFrom || !state.reportTo) {
+    const to = new Date();
+    const from = new Date();
+    from.setDate(from.getDate() - 29);
+    state.reportFrom = toDateInputValue(from);
+    state.reportTo = toDateInputValue(to);
+  }
+
+  const fromDate = new Date(state.reportFrom + 'T00:00:00');
+  const toDate = new Date(state.reportTo + 'T23:59:59');
+  const inRange = state.sales.filter((s) => {
+    const d = new Date(s.date);
+    return d >= fromDate && d <= toDate;
+  });
+
+  const totalSales = inRange.reduce((a, s) => a + s.total, 0);
+  const totalProfit = inRange.reduce((a, s) => {
+    const saleProfit = s.items.reduce((sa, i) => {
+      const p = state.products.find((x) => x.id === i.productId);
+      const cost = p ? p.costPrice : 0;
+      return sa + (i.price - cost) * i.qty;
+    }, 0);
+    return a + saleProfit;
+  }, 0);
+  const avgSale = inRange.length ? totalSales / inRange.length : 0;
+
+  const qtyByProduct = {};
+  inRange.forEach((s) => s.items.forEach((i) => {
+    if (!qtyByProduct[i.name]) qtyByProduct[i.name] = { qty: 0, revenue: 0 };
+    qtyByProduct[i.name].qty += i.qty;
+    qtyByProduct[i.name].revenue += i.lineTotal;
+  }));
+  const topProducts = Object.entries(qtyByProduct).sort((a, b) => b[1].qty - a[1].qty).slice(0, 10);
+
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h3>Date Range</h3></div>
+      <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; padding:16px 20px;">
+        <label style="margin:0;">From<input type="date" id="rep-from" value="${state.reportFrom}" /></label>
+        <label style="margin:0;">To<input type="date" id="rep-to" value="${state.reportTo}" /></label>
+        <button class="btn small" id="rep-apply">Apply</button>
+        <button class="btn secondary small" id="rep-last7">Last 7 days</button>
+        <button class="btn secondary small" id="rep-last30">Last 30 days</button>
+        <button class="btn secondary small" id="rep-thismonth">This month</button>
+      </div>
+    </div>
+    <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
+      <div class="stat-card"><div class="label">Sales in Range</div><div class="value">${money(totalSales)}</div></div>
+      <div class="stat-card"><div class="label">Profit in Range</div><div class="value">${money(totalProfit)}</div></div>
+      <div class="stat-card"><div class="label">Sales Count</div><div class="value">${inRange.length}</div></div>
+      <div class="stat-card"><div class="label">Average Sale</div><div class="value">${money(avgSale)}</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Top Products in Range</h3></div>
+      ${topProducts.length ? `
+        <table><thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+        <tbody>${topProducts.map(([name, d]) => `
+          <tr>
+            <td data-label="Product">${name}</td>
+            <td data-label="Qty Sold" class="mono">${d.qty}</td>
+            <td data-label="Revenue" class="mono">${money(d.revenue)}</td>
+          </tr>`).join('')}</tbody></table>
+      ` : `<div class="empty-state">No sales in this range.</div>`}
+    </div>
+  `;
+
+  document.getElementById('rep-apply').addEventListener('click', () => {
+    state.reportFrom = document.getElementById('rep-from').value || state.reportFrom;
+    state.reportTo = document.getElementById('rep-to').value || state.reportTo;
+    renderReports();
+  });
+  document.getElementById('rep-last7').addEventListener('click', () => {
+    const to = new Date(); const from = new Date(); from.setDate(from.getDate() - 6);
+    state.reportFrom = toDateInputValue(from); state.reportTo = toDateInputValue(to);
+    renderReports();
+  });
+  document.getElementById('rep-last30').addEventListener('click', () => {
+    const to = new Date(); const from = new Date(); from.setDate(from.getDate() - 29);
+    state.reportFrom = toDateInputValue(from); state.reportTo = toDateInputValue(to);
+    renderReports();
+  });
+  document.getElementById('rep-thismonth').addEventListener('click', () => {
+    const now = new Date();
+    const from = new Date(now.getFullYear(), now.getMonth(), 1);
+    state.reportFrom = toDateInputValue(from); state.reportTo = toDateInputValue(now);
+    renderReports();
+  });
 }
 
 function renderRecentSales() {
@@ -461,7 +561,7 @@ function renderSalesTable(sales) {
         <td data-label="Total" class="mono">${money(s.total)}</td>
         <td data-label="Paid" class="mono">${money(s.paid)}</td>
         <td data-label="Due">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">Settled</span>`}</td>
-        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">Edit</button></td>
+        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">Edit</button> <button class="btn secondary small" onclick="shareSaleWhatsApp('${s.id}')" title="Share on WhatsApp">Share</button></td>
       </tr>`).join('')}</tbody></table>
   `;
 }
@@ -630,6 +730,34 @@ window.editSale = (id) => {
     toast('Sale deleted');
     closeModal();
   });
+};
+
+window.shareSaleWhatsApp = (id) => {
+  const s = state.sales.find((x) => x.id === id);
+  if (!s) return;
+  const dateStr = new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const lines = [
+    `*H.M Traders*`,
+    s.invoiceNo ? `Invoice: ${formatInvoice(s.invoiceNo)}` : '',
+    `Date: ${dateStr}`,
+    `Customer: ${s.customerName || 'Walk-in'}`,
+    '',
+    ...s.items.map((i) => `${i.name} ×${i.qty} — ${money(i.lineTotal)}`),
+    '',
+    `Total: ${money(s.total)}`,
+    `Paid: ${money(s.paid)}`,
+    s.due > 0 ? `Due: ${money(s.due)}` : `Status: Settled`,
+    '',
+    'Thank you for your business!',
+  ].filter(Boolean);
+  const message = encodeURIComponent(lines.join('\n'));
+
+  // If the customer has a saved phone number, open a chat with them directly;
+  // otherwise let the user pick who to send it to.
+  const customer = s.customerId ? state.customers.find((c) => c.id === s.customerId) : null;
+  const phone = customer && customer.phone ? customer.phone.replace(/[^0-9]/g, '') : '';
+  const url = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
+  window.open(url, '_blank');
 };
 
 /* ============================================================
