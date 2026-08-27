@@ -777,7 +777,7 @@ function renderSuppliers() {
   `;
 
   document.getElementById('add-supplier-btn').addEventListener('click', () => openSupplierModal());
-  document.getElementById('add-purchase-btn').addEventListener('click', openPurchaseModal);
+  document.getElementById('add-purchase-btn').addEventListener('click', () => openPurchaseModal());
 }
 
 function openSupplierModal(existing) {
