@@ -9,6 +9,8 @@ const state = {
   suppliers: [],
   sales: [],
   purchases: [],
+  shopkeepers: [],
+  shopkeeperSales: [],
   view: 'dashboard',
   inventoryTab: 'All',
   reportFrom: null,
@@ -127,7 +129,7 @@ document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').f
 
 const moreSheetBackdrop = document.getElementById('more-sheet-backdrop');
 const moreBtn = document.getElementById('bottom-more-btn');
-const MORE_SHEET_VIEWS = ['reports', 'lowstock', 'recentsales'];
+const MORE_SHEET_VIEWS = ['reports', 'lowstock', 'recentsales', 'shopkeepers'];
 
 function openMoreSheet() { moreSheetBackdrop.classList.add('show'); }
 function closeMoreSheet() { moreSheetBackdrop.classList.remove('show'); }
@@ -150,7 +152,7 @@ function setView(view) {
   // eslint-disable-next-line no-unused-expressions
   void target.offsetWidth; // restart animation
   target.classList.add('view-enter');
-  const titles = { dashboard: 'Dashboard', reports: 'Reports', lowstock: 'Low Stock', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', suppliers: 'Suppliers & Purchases' };
+  const titles = { dashboard: 'Dashboard', reports: 'Reports', lowstock: 'Low Stock', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', shopkeepers: 'Shopkeepers', suppliers: 'Suppliers & Purchases' };
   document.getElementById('view-title').textContent = titles[view];
   renderAll();
 }
@@ -169,6 +171,8 @@ function attachListeners() {
     ['suppliers', (docs) => (state.suppliers = docs)],
     ['sales', (docs) => (state.sales = docs)],
     ['purchases', (docs) => (state.purchases = docs)],
+    ['shopkeepers', (docs) => (state.shopkeepers = docs)],
+    ['shopkeeperSales', (docs) => (state.shopkeeperSales = docs)],
   ];
 
   cols.forEach(([name, setter]) => {
@@ -188,6 +192,7 @@ function renderAll() {
   if (state.view === 'inventory') renderInventory();
   if (state.view === 'sales') renderSales();
   if (state.view === 'customers') renderCustomers();
+  if (state.view === 'shopkeepers') renderShopkeepers();
   if (state.view === 'suppliers') renderSuppliers();
 }
 
@@ -894,6 +899,324 @@ window.openPaymentModal = (customerId) => {
       toast('Save failed — try again');
     }
   });
+};
+
+/* ============================================================
+   SHOPKEEPERS (wholesale buyers, tracked separately from retail customers)
+   ============================================================ */
+function renderShopkeepers() {
+  const el = document.getElementById('view-shopkeepers');
+  const sales = state.shopkeeperSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  el.innerHTML = `
+    <div class="panel">
+      <div class="panel-head"><h3>Shopkeepers</h3><button class="btn small" id="add-shopkeeper-btn">+ Add shopkeeper</button></div>
+      ${state.shopkeepers.length ? `
+        <table><thead><tr><th>Name</th><th>Phone</th><th>Due</th><th></th></tr></thead>
+        <tbody>${state.shopkeepers.map((k) => `
+          <tr>
+            <td data-label="Name">${k.name}</td>
+            <td data-label="Phone">${k.phone || '—'}</td>
+            <td data-label="Due">${k.totalDue > 0 ? `<span class="pill warn">${money(k.totalDue)}</span>` : `<span class="pill ok">Clear</span>`}</td>
+            <td data-label="">
+              ${k.totalDue > 0 ? `<button class="btn secondary small" onclick="openShopkeeperPaymentModal('${k.id}')">Record payment</button>` : ''}
+              <button class="btn secondary small" onclick="editShopkeeper('${k.id}')">Edit</button>
+            </td>
+          </tr>`).join('')}</tbody></table>
+      ` : `<div class="empty-state">No shopkeepers yet.</div>`}
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>Sales to Shopkeepers</h3><button class="btn small" id="add-shopkeeper-sale-btn">+ Record sale</button></div>
+      ${sales.length ? `
+        <table><thead><tr><th>Invoice</th><th>Date</th><th>Shopkeeper</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+        <tbody>${sales.map((s) => `
+          <tr>
+            <td data-label="Invoice" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
+            <td data-label="Date">${new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+            <td data-label="Shopkeeper">${s.shopkeeperName}</td>
+            <td data-label="Items">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+            <td data-label="Total" class="mono">${money(s.total)}</td>
+            <td data-label="Paid" class="mono">${money(s.paid)}</td>
+            <td data-label="Due">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">Settled</span>`}</td>
+            <td data-label=""><button class="btn secondary small" onclick="editShopkeeperSale('${s.id}')">Edit</button> <button class="btn secondary small" onclick="shareShopkeeperSaleWhatsApp('${s.id}')">Share</button></td>
+          </tr>`).join('')}</tbody></table>
+      ` : `<div class="empty-state">No sales to shopkeepers recorded yet.</div>`}
+    </div>
+  `;
+  document.getElementById('add-shopkeeper-btn').addEventListener('click', () => openShopkeeperModal());
+  document.getElementById('add-shopkeeper-sale-btn').addEventListener('click', () => openShopkeeperSaleModal());
+}
+
+function openShopkeeperModal(existing) {
+  const isEdit = !!existing;
+  const k = existing || { name: '', phone: '' };
+  showModal(`
+    <h3>${isEdit ? 'Edit shopkeeper' : 'Add shopkeeper'}</h3>
+    <form id="shopkeeper-form">
+      <label>Name<input required id="k-name" value="${k.name}" /></label>
+      <label>Phone<input id="k-phone" value="${k.phone || ''}" /></label>
+      <div class="modal-actions">
+        ${isEdit ? `<button type="button" class="btn danger" id="k-delete">Delete</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add shopkeeper'}</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('shopkeeper-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
+    const data = {
+      name: document.getElementById('k-name').value.trim(),
+      phone: document.getElementById('k-phone').value.trim(),
+    };
+    try {
+      if (isEdit) {
+        await db.collection('shopkeepers').doc(existing.id).update(data);
+        toast('Shopkeeper updated');
+      } else {
+        await db.collection('shopkeepers').add({ ...data, totalDue: 0 });
+        toast('Shopkeeper added');
+      }
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
+  });
+  if (isEdit) {
+    document.getElementById('k-delete').addEventListener('click', async () => {
+      if (k.totalDue > 0 && !confirm(`${k.name} still has ${money(k.totalDue)} due. Delete anyway?`)) return;
+      if (k.totalDue <= 0 && !confirm(`Delete shopkeeper "${k.name}"?`)) return;
+      await db.collection('shopkeepers').doc(existing.id).delete();
+      toast('Shopkeeper deleted');
+      closeModal();
+    });
+  }
+}
+
+window.editShopkeeper = (id) => {
+  const k = state.shopkeepers.find((x) => x.id === id);
+  if (k) openShopkeeperModal(k);
+};
+
+window.openShopkeeperPaymentModal = (shopkeeperId) => {
+  const k = state.shopkeepers.find((x) => x.id === shopkeeperId);
+  showModal(`
+    <h3>Record payment — ${k.name}</h3>
+    <form id="shopkeeper-payment-form">
+      <p style="color:var(--muted); font-size:14px; margin:0;">Current due: <strong class="mono">${money(k.totalDue)}</strong></p>
+      <label>Amount received<input required type="number" max="${k.totalDue}" id="kpay-amount" /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">Save payment</button>
+      </div>
+    </form>
+  `);
+  document.getElementById('shopkeeper-payment-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
+    const amt = Number(document.getElementById('kpay-amount').value);
+    if (amt <= 0 || amt > k.totalDue) { toast('Enter a valid amount'); reEnable(); return; }
+    try {
+      await db.collection('shopkeepers').doc(k.id).update({ totalDue: k.totalDue - amt });
+      toast('Payment recorded');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
+  });
+};
+
+function openShopkeeperSaleModal() {
+  if (!state.products.length) { toast('Add a product first'); return; }
+  if (!state.shopkeepers.length) { toast('Add a shopkeeper first'); return; }
+  const rowId = uid();
+  showModal(`
+    <h3>Record sale to shopkeeper</h3>
+    <form id="shopkeeper-sale-form">
+      <label>Shopkeeper
+        <select id="ks-shopkeeper" required>
+          <option value="">Select shopkeeper…</option>
+          ${state.shopkeepers.map((k) => `<option value="${k.id}">${k.name}</option>`).join('')}
+        </select>
+      </label>
+      <div class="line-items" id="ks-line-items">
+        ${shopkeeperSaleLineRow(rowId)}
+      </div>
+      <button type="button" class="btn secondary small" id="ks-add-line-btn" style="align-self:flex-start;">+ Add another item</button>
+      <label>Amount paid now<input type="number" id="ks-paid" value="0" required /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">Save sale</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('ks-add-line-btn').addEventListener('click', () => {
+    document.getElementById('ks-line-items').insertAdjacentHTML('beforeend', shopkeeperSaleLineRow(uid()));
+  });
+
+  document.getElementById('shopkeeper-sale-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
+    const rows = [...document.querySelectorAll('#ks-line-items .line-item-row')];
+    const items = rows.map((r) => {
+      const productId = r.querySelector('.li-product').value;
+      const qty = Number(r.querySelector('.li-qty').value);
+      const p = state.products.find((x) => x.id === productId);
+      return p ? { productId, name: p.name, qty, price: p.salePrice, lineTotal: p.salePrice * qty } : null;
+    }).filter((i) => i && i.productId && i.qty > 0);
+
+    if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
+
+    for (const item of items) {
+      const p = state.products.find((x) => x.id === item.productId);
+      if (item.qty > p.stock) { toast(`Not enough stock for ${p.name}`); reEnable(); return; }
+    }
+
+    const total = items.reduce((a, i) => a + i.lineTotal, 0);
+    const paid = Number(document.getElementById('ks-paid').value) || 0;
+    const due = Math.max(total - paid, 0);
+    const shopkeeperId = document.getElementById('ks-shopkeeper').value;
+    const shopkeeper = state.shopkeepers.find((k) => k.id === shopkeeperId);
+    if (!shopkeeper) { toast('Select a shopkeeper'); reEnable(); return; }
+    const invoiceNo = await getNextInvoiceNo();
+
+    const batch = db.batch();
+    const saleRef = db.collection('shopkeeperSales').doc();
+    batch.set(saleRef, {
+      invoiceNo,
+      shopkeeperId,
+      shopkeeperName: shopkeeper.name,
+      items,
+      total, paid, due,
+      date: new Date().toISOString(),
+    });
+    items.forEach((i) => {
+      const p = state.products.find((x) => x.id === i.productId);
+      batch.update(db.collection('products').doc(i.productId), { stock: p.stock - i.qty });
+    });
+    if (due > 0) {
+      batch.update(db.collection('shopkeepers').doc(shopkeeper.id), { totalDue: (shopkeeper.totalDue || 0) + due });
+    }
+    try {
+      await batch.commit();
+      toast('Sale recorded');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
+  });
+}
+
+function shopkeeperSaleLineRow(rowId) {
+  return `
+    <div class="line-item-row" data-row="${rowId}">
+      <select class="li-product">
+        <option value="">Select product…</option>
+        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)} left)</option>`).join('')}
+      </select>
+      <input class="li-qty" type="number" min="1" value="1" placeholder="Qty" />
+      <span class="mono" style="font-size:12px;color:var(--muted);">unit price auto</span>
+      <button type="button" class="btn secondary small" onclick="this.closest('.line-item-row').remove()">✕</button>
+    </div>
+  `;
+}
+
+window.editShopkeeperSale = (id) => {
+  const s = state.shopkeeperSales.find((x) => x.id === id);
+  if (!s) return;
+  showModal(`
+    <h3>Edit sale ${s.invoiceNo ? formatInvoice(s.invoiceNo) : ''} — ${s.shopkeeperName}</h3>
+    <p style="color:var(--muted); font-size:14px; margin:0;">Items: ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>Total: <strong class="mono">${money(s.total)}</strong></p>
+    <form id="edit-shopkeeper-sale-form">
+      <label>Amount paid<input required type="number" id="eks-paid" value="${s.paid}" /></label>
+      <div class="modal-actions">
+        <button type="button" class="btn danger" id="eks-delete">Delete sale</button>
+        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
+        <button type="submit" class="btn">Save changes</button>
+      </div>
+    </form>
+  `);
+
+  document.getElementById('edit-shopkeeper-sale-form').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const reEnable = guardDoubleSubmit(e.target);
+    if (!reEnable) return;
+    const newPaid = Number(document.getElementById('eks-paid').value) || 0;
+    const newDue = Math.max(s.total - newPaid, 0);
+    const dueDelta = newDue - s.due;
+    const batch = db.batch();
+    batch.update(db.collection('shopkeeperSales').doc(s.id), { paid: newPaid, due: newDue });
+    if (dueDelta !== 0) {
+      const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
+      if (shopkeeper) batch.update(db.collection('shopkeepers').doc(shopkeeper.id), { totalDue: (shopkeeper.totalDue || 0) + dueDelta });
+    }
+    try {
+      await batch.commit();
+      toast('Sale updated');
+      closeModal();
+    } catch (err) {
+      reEnable();
+      toast('Save failed — try again');
+    }
+  });
+
+  document.getElementById('eks-delete').addEventListener('click', async () => {
+    if (!confirm('Delete this sale? Stock and dues will be reversed.')) return;
+    const batch = db.batch();
+    batch.delete(db.collection('shopkeeperSales').doc(s.id));
+    s.items.forEach((i) => {
+      const p = state.products.find((x) => x.id === i.productId);
+      if (p) batch.update(db.collection('products').doc(i.productId), { stock: p.stock + i.qty });
+    });
+    if (s.due > 0) {
+      const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
+      if (shopkeeper) batch.update(db.collection('shopkeepers').doc(shopkeeper.id), { totalDue: Math.max((shopkeeper.totalDue || 0) - s.due, 0) });
+    }
+    await batch.commit();
+    toast('Sale deleted');
+    closeModal();
+  });
+};
+
+window.shareShopkeeperSaleWhatsApp = async (id) => {
+  const s = state.shopkeeperSales.find((x) => x.id === id);
+  if (!s) return;
+  const dateStr = new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const lines = [
+    `*H.M Traders*`,
+    s.invoiceNo ? `Invoice: ${formatInvoice(s.invoiceNo)}` : '',
+    `Date: ${dateStr}`,
+    `Shopkeeper: ${s.shopkeeperName}`,
+    '',
+    ...s.items.map((i) => `${i.name} ×${i.qty} — ${money(i.lineTotal)}`),
+    '',
+    `Total: ${money(s.total)}`,
+    `Paid: ${money(s.paid)}`,
+    s.due > 0 ? `Due: ${money(s.due)}` : `Status: Settled`,
+    '',
+    'Thank you for your business!',
+  ].filter(Boolean);
+  const text = lines.join('\n');
+
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: 'H.M Traders Invoice', text });
+      return;
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
+  const message = encodeURIComponent(text);
+  const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
+  const phone = shopkeeper && shopkeeper.phone ? shopkeeper.phone.replace(/[^0-9]/g, '') : '';
+  const url = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
+  window.open(url, '_blank');
 };
 
 /* ============================================================
