@@ -125,9 +125,24 @@ document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').f
   btn.addEventListener('click', () => setView(btn.dataset.view));
 });
 
+const moreSheetBackdrop = document.getElementById('more-sheet-backdrop');
+const moreBtn = document.getElementById('bottom-more-btn');
+const MORE_SHEET_VIEWS = ['reports', 'lowstock', 'recentsales'];
+
+function openMoreSheet() { moreSheetBackdrop.classList.add('show'); }
+function closeMoreSheet() { moreSheetBackdrop.classList.remove('show'); }
+
+moreBtn.addEventListener('click', openMoreSheet);
+moreSheetBackdrop.addEventListener('click', (e) => { if (e.target === moreSheetBackdrop) closeMoreSheet(); });
+document.getElementById('more-sheet-cancel').addEventListener('click', closeMoreSheet);
+document.querySelectorAll('.more-sheet-item[data-view]').forEach((btn) => {
+  btn.addEventListener('click', () => { closeMoreSheet(); setView(btn.dataset.view); });
+});
+
 function setView(view) {
   state.view = view;
   document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
+  moreBtn.classList.toggle('active', MORE_SHEET_VIEWS.includes(view));
   document.querySelectorAll('.view').forEach((v) => v.classList.remove('active'));
   const target = document.getElementById(`view-${view}`);
   target.classList.add('active');

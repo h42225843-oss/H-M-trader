@@ -67,7 +67,7 @@
       <button class="nav-item" data-view="suppliers"><span class="dot"></span>Suppliers &amp; Purchases</button>
     </nav>
     <button id="logout-btn" class="nav-item logout">Sign out</button>
-    <div class="app-version">v14</div>
+    <div class="app-version">v15</div>
   </aside>
 
   <main class="main">
@@ -107,7 +107,20 @@
       <svg viewBox="0 0 24 24" fill="none"><path d="M3 21V9l9-6 9 6v12" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 21v-6h6v6" stroke="currentColor" stroke-width="1.8"/></svg>
       <span>Suppliers</span>
     </button>
+    <button class="bottom-nav-item" id="bottom-more-btn">
+      <svg viewBox="0 0 24 24" fill="none"><circle cx="5" cy="12" r="1.8" fill="currentColor"/><circle cx="12" cy="12" r="1.8" fill="currentColor"/><circle cx="19" cy="12" r="1.8" fill="currentColor"/></svg>
+      <span>More</span>
+    </button>
   </nav>
+
+  <div id="more-sheet-backdrop" class="more-sheet-backdrop">
+    <div class="more-sheet">
+      <button class="more-sheet-item" data-view="reports">Reports</button>
+      <button class="more-sheet-item" data-view="lowstock">Low Stock</button>
+      <button class="more-sheet-item" data-view="recentsales">Recent Sales</button>
+      <button class="more-sheet-item cancel" id="more-sheet-cancel">Cancel</button>
+    </div>
+  </div>
 </div>
 
 <div id="toast" class="toast"></div>
