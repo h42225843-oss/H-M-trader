@@ -57,6 +57,25 @@ async function getNextInvoiceNo() {
   });
 }
 
+// Animates every [data-countup] number inside a container from 0 to its real value.
+// data-format is "money" or "int". Call right after setting a panel's innerHTML.
+function animateCountUps(container) {
+  container.querySelectorAll('[data-countup]').forEach((el) => {
+    const target = Number(el.dataset.countup) || 0;
+    const isMoney = el.dataset.format === 'money';
+    const duration = 650;
+    const start = performance.now();
+    function tick(now) {
+      const p = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - p, 3); // ease-out cubic
+      const current = Math.round(target * eased);
+      el.textContent = isMoney ? money(current) : current.toLocaleString('en-PK');
+      if (p < 1) requestAnimationFrame(tick);
+    }
+    requestAnimationFrame(tick);
+  });
+}
+
 function toast(msg) {
   const t = document.getElementById('toast');
   t.textContent = msg;
@@ -273,10 +292,10 @@ function renderReports() {
       </div>
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
-      <div class="stat-card"><div class="label">Sales in Range</div><div class="value">${money(totalSales)}</div></div>
-      <div class="stat-card"><div class="label">Profit in Range</div><div class="value">${money(totalProfit)}</div></div>
-      <div class="stat-card"><div class="label">Sales Count</div><div class="value">${inRange.length}</div></div>
-      <div class="stat-card"><div class="label">Average Sale</div><div class="value">${money(avgSale)}</div></div>
+      <div class="stat-card"><div class="label">Sales in Range</div><div class="value" data-countup="${totalSales}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Profit in Range</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Sales Count</div><div class="value" data-countup="${inRange.length}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">Average Sale</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
     </div>
     <div class="panel">
       <div class="panel-head"><h3>Top Products in Range</h3></div>
@@ -291,6 +310,7 @@ function renderReports() {
       ` : `<div class="empty-state">No sales in this range.</div>`}
     </div>
   `;
+  animateCountUps(el);
 
   document.getElementById('rep-apply').addEventListener('click', () => {
     state.reportFrom = document.getElementById('rep-from').value || state.reportFrom;
@@ -377,20 +397,21 @@ function renderDashboard() {
 
   el.innerHTML = `
     <div class="stat-grid">
-      <div class="stat-card"><div class="label">Today's Sales</div><div class="value">${money(todayTotal)}</div></div>
-      <div class="stat-card"><div class="label">Sales Recorded Today</div><div class="value">${todaysSales.length}</div></div>
-      <div class="stat-card ${totalDue > 0 ? 'warn' : ''}"><div class="label">Total Dues Owed</div><div class="value">${money(totalDue)}</div></div>
-      <div class="stat-card"><div class="label">Stock Value</div><div class="value">${money(stockValue)}</div></div>
-      <div class="stat-card"><div class="label">Total Crates</div><div class="value">${totalCrates}</div></div>
-      <div class="stat-card"><div class="label">Total Pcs</div><div class="value">${totalPcs}</div></div>
-      <div class="stat-card"><div class="label">This Week's Sales</div><div class="value">${money(weekTotal)}</div></div>
-      <div class="stat-card"><div class="label">Total Profit</div><div class="value">${money(totalProfit)}</div></div>
-      <div class="stat-card"><div class="label">Customers</div><div class="value">${state.customers.length}</div></div>
-      <div class="stat-card"><div class="label">Suppliers</div><div class="value">${state.suppliers.length}</div></div>
-      <div class="stat-card"><div class="label">Average Sale Value</div><div class="value">${money(avgSale)}</div></div>
+      <div class="stat-card"><div class="label">Today's Sales</div><div class="value" data-countup="${todayTotal}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Sales Recorded Today</div><div class="value" data-countup="${todaysSales.length}" data-format="int">0</div></div>
+      <div class="stat-card ${totalDue > 0 ? 'warn' : ''}"><div class="label">Total Dues Owed</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Stock Value</div><div class="value" data-countup="${stockValue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Total Crates</div><div class="value" data-countup="${totalCrates}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">Total Pcs</div><div class="value" data-countup="${totalPcs}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">This Week's Sales</div><div class="value" data-countup="${weekTotal}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Total Profit</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">Customers</div><div class="value" data-countup="${state.customers.length}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">Suppliers</div><div class="value" data-countup="${state.suppliers.length}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">Average Sale Value</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
       <div class="stat-card"><div class="label">Top-Selling Product</div><div class="value" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
     </div>
   `;
+  animateCountUps(el);
 }
 
 /* ============================================================
