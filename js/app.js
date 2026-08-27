@@ -232,8 +232,6 @@ function renderDashboard() {
   const topProductEntry = Object.entries(qtyByProduct).sort((a, b) => b[1] - a[1])[0];
   const topProductLabel = topProductEntry ? `${topProductEntry[0]} (${topProductEntry[1]} sold)` : '—';
 
-  const recentSales = state.sales.slice().sort((a, b) => new Date(b.date) - new Date(a.date)).slice(0, 6);
-  const recentSalesTotal = recentSales.reduce((a, s) => a + s.total, 0);
 
   el.innerHTML = `
     <div class="stat-grid">
@@ -261,13 +259,6 @@ function renderDashboard() {
             <td data-label="Reorder at" class="mono">${p.lowStockAt ?? 5} pcs</td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">Nothing running low right now.</div>`}
-    </div>
-    <div class="panel">
-      <div class="panel-head">
-        <h3>Recent Sales</h3>
-        <span class="mono" style="font-size:13px; color:var(--muted);">${recentSales.length} shown · ${money(recentSalesTotal)} total</span>
-      </div>
-      ${renderSalesTable(recentSales)}
     </div>
   `;
 }
