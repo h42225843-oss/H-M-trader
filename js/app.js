@@ -1575,6 +1575,15 @@ function openCustomerModal(existing) {
       name: document.getElementById('c-name').value.trim(),
       phone: document.getElementById('c-phone').value.trim(),
     };
+    // A name can't exist as both a Customer and a Shopkeeper — that's exactly what
+    // causes a sale to accidentally land in the wrong ledger.
+    const nameLower = data.name.toLowerCase();
+    const clashesWithShopkeeper = state.shopkeepers.some((k) => k.name.trim().toLowerCase() === nameLower);
+    if (clashesWithShopkeeper) {
+      toast(`"${data.name}" is already a Shopkeeper — use the Shopkeepers page for them instead`);
+      reEnable();
+      return;
+    }
     try {
       if (isEdit) {
         await db.collection('customers').doc(existing.id).update(data);
@@ -1704,6 +1713,13 @@ function openShopkeeperModal(existing) {
       name: document.getElementById('k-name').value.trim(),
       phone: document.getElementById('k-phone').value.trim(),
     };
+    const nameLower = data.name.toLowerCase();
+    const clashesWithCustomer = state.customers.some((c) => c.name.trim().toLowerCase() === nameLower);
+    if (clashesWithCustomer) {
+      toast(`"${data.name}" is already a Customer — use the Customers & Dues page for them instead`);
+      reEnable();
+      return;
+    }
     try {
       if (isEdit) {
         await db.collection('shopkeepers').doc(existing.id).update(data);
