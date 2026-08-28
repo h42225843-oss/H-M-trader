@@ -1266,11 +1266,19 @@ window.shareSaleWhatsApp = async (id) => {
   }
 
   // Fallback (e.g. desktop browsers without native share support, or if native share
-  // failed for another reason): open WhatsApp's generic composer so the person can pick
-  // who to send it to themselves — never auto-target a stored number, since it may be
-  // test/placeholder data rather than a real contact.
+  // failed for another reason): if this customer has a saved phone number, jump straight
+  // into WhatsApp Web's chat with them (skipping the wa.me landing page entirely).
+  // Otherwise open WhatsApp's generic composer so the person can pick who to send it to.
   const message = encodeURIComponent(text);
-  window.open(`https://wa.me/?text=${message}`, '_blank');
+  const customerForShare = s.customerId ? state.customers.find((c) => c.id === s.customerId) : null;
+  const customerPhone = customerForShare && customerForShare.phone ? customerForShare.phone.replace(/[^0-9]/g, '') : '';
+  const shareUrl = customerPhone
+    ? `https://web.whatsapp.com/send?phone=${customerPhone}&text=${message}`
+    : `https://api.whatsapp.com/send?text=${message}`;
+  // Reusing the same named window means repeat shares land in the same WhatsApp Web tab
+  // instead of piling up new tabs (which is what triggers WhatsApp's "already open
+  // elsewhere" conflict prompt).
+  window.open(shareUrl, 'hmTradersWhatsApp');
 };
 
 /* ============================================================
@@ -1693,11 +1701,15 @@ window.shareShopkeeperSaleWhatsApp = async (id) => {
       if (err && err.name === 'AbortError') return;
     }
   }
+  // Same as the retail share: jump straight into the shopkeeper's WhatsApp chat when we
+  // have their number, skipping the wa.me landing page, and reuse the same tab each time.
   const message = encodeURIComponent(text);
   const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
   const phone = shopkeeper && shopkeeper.phone ? shopkeeper.phone.replace(/[^0-9]/g, '') : '';
-  const url = phone ? `https://wa.me/${phone}?text=${message}` : `https://wa.me/?text=${message}`;
-  window.open(url, '_blank');
+  const shareUrl = phone
+    ? `https://web.whatsapp.com/send?phone=${phone}&text=${message}`
+    : `https://api.whatsapp.com/send?text=${message}`;
+  window.open(shareUrl, 'hmTradersWhatsApp');
 };
 
 /* ============================================================
