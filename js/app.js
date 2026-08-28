@@ -496,6 +496,21 @@ function isDesktopDevice() {
   return window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(pointer: coarse)').matches;
 }
 
+// Converts a locally-typed phone number (e.g. "0300 0303011") into the full
+// international format WhatsApp needs to open a direct chat (country code,
+// no leading zero, digits only) — works even if the number isn't a saved
+// contact. Assumes Pakistan (+92) since that's this shop's country.
+function normalizePhoneForWhatsApp(phone) {
+  let digits = (phone || '').replace(/[^0-9]/g, '');
+  if (!digits) return '';
+  if (digits.startsWith('0')) {
+    digits = '92' + digits.slice(1); // local "03XX-XXXXXXX" → "923XXXXXXXXX"
+  } else if (!digits.startsWith('92') && digits.length === 10) {
+    digits = '92' + digits; // e.g. "3XXXXXXXXX" typed without the leading 0
+  }
+  return digits;
+}
+
 // Formats an invoice sequence number like "INV-0007"
 function formatInvoice(n) {
   return `INV-${String(n).padStart(4, '0')}`;
@@ -1271,7 +1286,7 @@ window.shareSaleWhatsApp = async (id) => {
   // Otherwise open WhatsApp's generic composer so the person can pick who to send it to.
   const message = encodeURIComponent(text);
   const customerForShare = s.customerId ? state.customers.find((c) => c.id === s.customerId) : null;
-  const customerPhone = customerForShare && customerForShare.phone ? customerForShare.phone.replace(/[^0-9]/g, '') : '';
+  const customerPhone = customerForShare && customerForShare.phone ? normalizePhoneForWhatsApp(customerForShare.phone) : '';
   const shareUrl = customerPhone
     ? `https://web.whatsapp.com/send?phone=${customerPhone}&text=${message}`
     : `https://api.whatsapp.com/send?text=${message}`;
@@ -1705,7 +1720,7 @@ window.shareShopkeeperSaleWhatsApp = async (id) => {
   // have their number, skipping the wa.me landing page, and reuse the same tab each time.
   const message = encodeURIComponent(text);
   const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
-  const phone = shopkeeper && shopkeeper.phone ? shopkeeper.phone.replace(/[^0-9]/g, '') : '';
+  const phone = shopkeeper && shopkeeper.phone ? normalizePhoneForWhatsApp(shopkeeper.phone) : '';
   const shareUrl = phone
     ? `https://web.whatsapp.com/send?phone=${phone}&text=${message}`
     : `https://api.whatsapp.com/send?text=${message}`;
