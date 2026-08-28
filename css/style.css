@@ -39,6 +39,7 @@
 [data-theme="dark"] thead th{background:#1F2729;}
 [data-theme="dark"] tbody tr:hover{background:#212a2c;}
 [data-theme="dark"] .splash{background: radial-gradient(1200px 600px at 20% -10%, #17362c 0%, transparent 60%), linear-gradient(180deg,var(--green-deep),#081512);}
+[data-theme="dark"] .stat-card .value{color:var(--ink);}
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
@@ -335,7 +336,12 @@ tbody tr:hover{background:#FBFAF6;}
 
 /* ---------- Printable invoice ---------- */
 .invoice-doc{
-  background:var(--paper); border-radius:10px; padding:26px 28px; max-width:480px;
+  /* Always renders in its own fixed light palette — a printed/shared invoice should
+     look the same professional way regardless of the app's light/dark mode setting. */
+  --ink: #1B1F1D; --paper: #FFFFFF; --cream: #F6F3EC; --green-deep: #16332B;
+  --amber: #C97C2E; --muted: #6B6F68; --line: #E4DFD2;
+  background:#FFFFFF; color:#1B1F1D;
+  border-radius:10px; padding:26px 28px; max-width:480px;
   animation: invoice-in .4s cubic-bezier(.2,.8,.25,1) both;
 }
 @keyframes invoice-in{
