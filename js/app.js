@@ -15,22 +15,472 @@ const state = {
   inventoryTab: 'All',
   reportFrom: null,
   reportTo: null,
+  lang: 'en',
 };
 
 const money = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
 const todayStr = () => new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+
+/* ---------------- Language (English / Urdu) ---------------- */
+const translations = {
+  en: {
+    loginSub: 'Ledger & Stock Register',
+    emailLabel: 'Email',
+    passwordLabel: 'Password',
+    signIn: 'Sign in',
+    navDashboard: 'Dashboard',
+    navReports: 'Reports',
+    navLowStock: 'Low Stock',
+    navRecentSales: 'Recent Sales',
+    navInventory: 'Inventory',
+    navSales: 'Sales',
+    navCustomers: 'Customers & Dues',
+    navShopkeepers: 'Shopkeepers',
+    navSuppliers: 'Suppliers & Purchases',
+    langToggleLabel: 'اردو / English',
+    signOut: 'Sign out',
+    navHome: 'Home',
+    navStock: 'Stock',
+    navDues: 'Dues',
+    navSuppliersShort: 'Suppliers',
+    navMore: 'More',
+    cancel: 'Cancel',
+
+    edit: 'Edit',
+    delete: 'Delete',
+    saveChanges: 'Save changes',
+    share: 'Share',
+    recordPayment: 'Record payment',
+    settled: 'Settled',
+    clearStatus: 'Clear',
+    saving: 'Saving…',
+    saveFailed: 'Save failed — try again',
+    pcs: 'pcs',
+    crate: 'crate',
+    crates: 'crates',
+    walkIn: 'Walk-in',
+    unitPriceAuto: 'unit price auto',
+    selectProduct: 'Select product…',
+    selectSupplier: 'Select supplier…',
+    selectShopkeeper: 'Select shopkeeper…',
+    addAnotherItem: '+ Add another item',
+
+    colName: 'Name',
+    colCategory: 'Category',
+    colStock: 'Stock',
+    colCrates: 'Crates',
+    colPcs: 'Pcs',
+    colCost: 'Cost',
+    colSalePrice: 'Sale price',
+    colPhone: 'Phone',
+    colDue: 'Due',
+    colInvoice: 'Invoice',
+    colDate: 'Date',
+    colCustomer: 'Customer',
+    colShopkeeperCol: 'Shopkeeper',
+    colItems: 'Items',
+    colTotal: 'Total',
+    colPaid: 'Paid',
+    colSupplierCol: 'Supplier',
+    colProduct: 'Product',
+    colStockLeft: 'Stock left',
+    colReorderAt: 'Reorder at',
+    colQtySold: 'Qty Sold',
+    colRevenue: 'Revenue',
+
+    productsHeading: 'Products',
+    lowStockHeading: 'Low Stock',
+    dateRangeHeading: 'Date Range',
+    topProductsHeading: 'Top Products in Range',
+    recentSalesHeading: 'Recent Sales',
+    allSalesHeading: 'All sales',
+    customersHeading: 'Customers',
+    shopkeepersHeading: 'Shopkeepers',
+    salesToShopkeepersHeading: 'Sales to Shopkeepers',
+    suppliersHeading: 'Suppliers',
+    purchasesHeading: 'Purchases',
+
+    addProductBtn: '+ Add product',
+    recordSaleBtn: '+ Record sale',
+    addCustomerBtn: '+ Add customer',
+    addShopkeeperBtn: '+ Add shopkeeper',
+    addSupplierBtn: '+ Add supplier',
+    recordPurchaseBtn: '+ Record purchase',
+    applyBtn: 'Apply',
+    last7Btn: 'Last 7 days',
+    last30Btn: 'Last 30 days',
+    thisMonthBtn: 'This month',
+    fromLabel: 'From',
+    toLabel: 'To',
+
+    editProductTitle: 'Edit product',
+    addProductTitle: 'Add product',
+    editSaleTitlePrefix: 'Edit sale',
+    recordSaleTitle: 'Record sale',
+    editCustomerTitle: 'Edit customer',
+    addCustomerTitle: 'Add customer',
+    editShopkeeperTitle: 'Edit shopkeeper',
+    addShopkeeperTitle: 'Add shopkeeper',
+    editSupplierTitle: 'Edit supplier',
+    addSupplierTitle: 'Add supplier',
+    editPurchaseTitle: 'Edit purchase',
+    recordPurchaseTitle: 'Record purchase',
+    recordSaleToShopkeeperTitle: 'Record sale to shopkeeper',
+    recordPaymentPrefix: 'Record payment',
+
+    productNameLabel: 'Product name',
+    categoryLabel: 'Category',
+    totalCratesLabel: 'Total Crates',
+    totalPcsLabel: 'Total Pcs',
+    piecesPerCrateLabel: 'Pieces per crate',
+    piecesPerCrateHint: '— how many pcs make up 1 crate (leave blank if sold loose only)',
+    lowStockAlertLabel: 'Low stock alert at (pcs)',
+    costPriceLabel: 'Cost price (per pc)',
+    salePriceLabel: 'Sale price (per pc)',
+    nameLabel: 'Name',
+    phoneLabel: 'Phone',
+    customerLabel: 'Customer',
+    shopkeeperLabel: 'Shopkeeper',
+    supplierLabel: 'Supplier',
+    amountPaidNowLabel: 'Amount paid now',
+    amountReceivedLabel: 'Amount received',
+    currentDueLabel: 'Current due:',
+    itemsLabel: 'Items:',
+    totalLabelColon: 'Total:',
+    deleteSaleBtn: 'Delete sale',
+    savePaymentBtn: 'Save payment',
+    saveSaleBtn: 'Save sale',
+    savePurchaseBtn: 'Save purchase',
+
+    noProductsEmpty: 'No products yet. Add your first bottle product to get started.',
+    nothingLowStock: 'Nothing running low right now.',
+    noSalesInRange: 'No sales in this range.',
+    noSalesRecorded: 'No sales recorded yet.',
+    noCustomersYet: 'No customers yet.',
+    noShopkeepersYet: 'No shopkeepers yet.',
+    noSalesToShopkeepersYet: 'No sales to shopkeepers recorded yet.',
+    noSuppliersYet: 'No suppliers yet.',
+    noPurchasesYet: 'No purchases recorded yet.',
+
+    productUpdated: 'Product updated',
+    productAdded: 'Product added',
+    productDeleted: 'Product deleted',
+    saleRecorded: 'Sale recorded',
+    saleUpdated: 'Sale updated',
+    saleDeleted: 'Sale deleted',
+    addProductFirst: 'Add a product first',
+    addAtLeastOneItem: 'Add at least one valid item',
+    customerUpdated: 'Customer updated',
+    customerAdded: 'Customer added',
+    customerDeleted: 'Customer deleted',
+    enterValidAmount: 'Enter a valid amount',
+    paymentRecorded: 'Payment recorded',
+    shopkeeperUpdated: 'Shopkeeper updated',
+    shopkeeperAdded: 'Shopkeeper added',
+    shopkeeperDeleted: 'Shopkeeper deleted',
+    selectShopkeeperToast: 'Select a shopkeeper',
+    supplierUpdated: 'Supplier updated',
+    supplierAdded: 'Supplier added',
+    supplierDeleted: 'Supplier deleted',
+    purchaseUpdated: 'Purchase updated',
+    purchaseRecordedStockUpdated: 'Purchase recorded, stock updated',
+    purchaseDeleted: 'Purchase deleted',
+    addSupplierFirst: 'Add a supplier first',
+    addShopkeeperFirst: 'Add a shopkeeper first',
+    notEnoughStockFor: 'Not enough stock for',
+
+    confirmDeleteCannotUndo: 'This cannot be undone.',
+    confirmDeleteSaleBody: 'Delete this sale? Stock and customer dues will be reversed.',
+    confirmDeleteShopkeeperSaleBody: 'Delete this sale? Stock and dues will be reversed.',
+    confirmStillHasDue: 'still has',
+    confirmDueDeleteAnyway: 'due. Delete anyway?',
+    confirmDeleteCustomerPrefix: 'Delete customer',
+    confirmDeleteShopkeeperPrefix: 'Delete shopkeeper',
+    confirmDeleteSupplierPrefix: 'Delete supplier',
+    confirmDeleteSupplierSuffix: '? Past purchases will keep showing their recorded name.',
+    confirmDeletePurchasePrefix: 'Delete this purchase from',
+    confirmDeletePurchaseSuffix: '? Stock added by it will be reversed.',
+
+    statTodaySales: "Today's Sales",
+    statSalesRecordedToday: 'Sales Recorded Today',
+    statTotalDues: 'Total Dues Owed',
+    statStockValue: 'Stock Value',
+    statTotalCrates: 'Total Crates',
+    statTotalPcs: 'Total Pcs',
+    statWeekSales: "This Week's Sales",
+    statTotalProfit: 'Total Profit',
+    statCustomers: 'Customers',
+    statSuppliers: 'Suppliers',
+    statAvgSale: 'Average Sale Value',
+    statTopProduct: 'Top-Selling Product',
+    statSalesInRange: 'Sales in Range',
+    statProfitInRange: 'Profit in Range',
+    statSalesCount: 'Sales Count',
+    statAverageSale: 'Average Sale',
+
+    waInvoiceLabel: 'Invoice:',
+    waDateLabel: 'Date:',
+    waCustomerLabel: 'Customer:',
+    waShopkeeperLabel: 'Shopkeeper:',
+    waTotalLabel: 'Total:',
+    waPaidLabel: 'Paid:',
+    waDueLabel: 'Due:',
+    waStatusSettled: 'Status: Settled',
+    waThanks: 'Thank you for your business!',
+    waShareTitle: 'H.M Traders Invoice',
+  },
+  ur: {
+    loginSub: 'لیجر اور اسٹاک رجسٹر',
+    emailLabel: 'ای میل',
+    passwordLabel: 'پاس ورڈ',
+    signIn: 'سائن ان کریں',
+    navDashboard: 'ڈیش بورڈ',
+    navReports: 'رپورٹس',
+    navLowStock: 'کم اسٹاک',
+    navRecentSales: 'حالیہ فروخت',
+    navInventory: 'انوینٹری',
+    navSales: 'فروخت',
+    navCustomers: 'کسٹمرز اور واجبات',
+    navShopkeepers: 'دکاندار',
+    navSuppliers: 'سپلائرز اور خریداری',
+    langToggleLabel: 'اردو / English',
+    signOut: 'سائن آؤٹ',
+    navHome: 'ہوم',
+    navStock: 'اسٹاک',
+    navDues: 'واجبات',
+    navSuppliersShort: 'سپلائرز',
+    navMore: 'مزید',
+    cancel: 'منسوخ کریں',
+
+    edit: 'ترمیم',
+    delete: 'حذف کریں',
+    saveChanges: 'تبدیلیاں محفوظ کریں',
+    share: 'شیئر کریں',
+    recordPayment: 'ادائیگی درج کریں',
+    settled: 'ادا شدہ',
+    clearStatus: 'صاف',
+    saving: 'محفوظ ہو رہا ہے…',
+    saveFailed: 'محفوظ کرنے میں ناکامی — دوبارہ کوشش کریں',
+    pcs: 'عدد',
+    crate: 'کریٹ',
+    crates: 'کریٹس',
+    walkIn: 'واک اِن',
+    unitPriceAuto: 'قیمت خودکار',
+    selectProduct: 'پروڈکٹ منتخب کریں…',
+    selectSupplier: 'سپلائر منتخب کریں…',
+    selectShopkeeper: 'دکاندار منتخب کریں…',
+    addAnotherItem: '+ ایک اور آئٹم شامل کریں',
+
+    colName: 'نام',
+    colCategory: 'کیٹیگری',
+    colStock: 'اسٹاک',
+    colCrates: 'کریٹس',
+    colPcs: 'عدد',
+    colCost: 'لاگت',
+    colSalePrice: 'فروخت قیمت',
+    colPhone: 'فون',
+    colDue: 'واجب الادا',
+    colInvoice: 'انوائس',
+    colDate: 'تاریخ',
+    colCustomer: 'کسٹمر',
+    colShopkeeperCol: 'دکاندار',
+    colItems: 'اشیاء',
+    colTotal: 'کل',
+    colPaid: 'ادا شدہ',
+    colSupplierCol: 'سپلائر',
+    colProduct: 'پروڈکٹ',
+    colStockLeft: 'باقی اسٹاک',
+    colReorderAt: 'دوبارہ آرڈر پر',
+    colQtySold: 'فروخت شدہ مقدار',
+    colRevenue: 'آمدنی',
+
+    productsHeading: 'پروڈکٹس',
+    lowStockHeading: 'کم اسٹاک',
+    dateRangeHeading: 'تاریخ کی حد',
+    topProductsHeading: 'اس مدت کی بہترین پروڈکٹس',
+    recentSalesHeading: 'حالیہ فروخت',
+    allSalesHeading: 'تمام فروخت',
+    customersHeading: 'کسٹمرز',
+    shopkeepersHeading: 'دکاندار',
+    salesToShopkeepersHeading: 'دکانداروں کو فروخت',
+    suppliersHeading: 'سپلائرز',
+    purchasesHeading: 'خریداری',
+
+    addProductBtn: '+ پروڈکٹ شامل کریں',
+    recordSaleBtn: '+ فروخت درج کریں',
+    addCustomerBtn: '+ کسٹمر شامل کریں',
+    addShopkeeperBtn: '+ دکاندار شامل کریں',
+    addSupplierBtn: '+ سپلائر شامل کریں',
+    recordPurchaseBtn: '+ خریداری درج کریں',
+    applyBtn: 'لاگو کریں',
+    last7Btn: 'گزشتہ 7 دن',
+    last30Btn: 'گزشتہ 30 دن',
+    thisMonthBtn: 'اس مہینے',
+    fromLabel: 'سے',
+    toLabel: 'تک',
+
+    editProductTitle: 'پروڈکٹ میں ترمیم کریں',
+    addProductTitle: 'پروڈکٹ شامل کریں',
+    editSaleTitlePrefix: 'فروخت میں ترمیم کریں',
+    recordSaleTitle: 'فروخت درج کریں',
+    editCustomerTitle: 'کسٹمر میں ترمیم کریں',
+    addCustomerTitle: 'کسٹمر شامل کریں',
+    editShopkeeperTitle: 'دکاندار میں ترمیم کریں',
+    addShopkeeperTitle: 'دکاندار شامل کریں',
+    editSupplierTitle: 'سپلائر میں ترمیم کریں',
+    addSupplierTitle: 'سپلائر شامل کریں',
+    editPurchaseTitle: 'خریداری میں ترمیم کریں',
+    recordPurchaseTitle: 'خریداری درج کریں',
+    recordSaleToShopkeeperTitle: 'دکاندار کو فروخت درج کریں',
+    recordPaymentPrefix: 'ادائیگی درج کریں',
+
+    productNameLabel: 'پروڈکٹ کا نام',
+    categoryLabel: 'کیٹیگری',
+    totalCratesLabel: 'کل کریٹس',
+    totalPcsLabel: 'کل عدد',
+    piecesPerCrateLabel: 'فی کریٹ عدد',
+    piecesPerCrateHint: '— ایک کریٹ میں کتنے عدد ہیں (اگر صرف کھلا فروخت ہوتا ہے تو خالی چھوڑ دیں)',
+    lowStockAlertLabel: 'کم اسٹاک الرٹ (عدد)',
+    costPriceLabel: 'لاگت قیمت (فی عدد)',
+    salePriceLabel: 'فروخت قیمت (فی عدد)',
+    nameLabel: 'نام',
+    phoneLabel: 'فون',
+    customerLabel: 'کسٹمر',
+    shopkeeperLabel: 'دکاندار',
+    supplierLabel: 'سپلائر',
+    amountPaidNowLabel: 'ابھی ادا کی گئی رقم',
+    amountReceivedLabel: 'وصول شدہ رقم',
+    currentDueLabel: 'موجودہ واجب الادا:',
+    itemsLabel: 'اشیاء:',
+    totalLabelColon: 'کل:',
+    deleteSaleBtn: 'فروخت حذف کریں',
+    savePaymentBtn: 'ادائیگی محفوظ کریں',
+    saveSaleBtn: 'فروخت محفوظ کریں',
+    savePurchaseBtn: 'خریداری محفوظ کریں',
+
+    noProductsEmpty: 'ابھی تک کوئی پروڈکٹ نہیں۔ شروع کرنے کے لیے اپنی پہلی بوتل پروڈکٹ شامل کریں۔',
+    nothingLowStock: 'اس وقت کوئی چیز کم نہیں ہے۔',
+    noSalesInRange: 'اس مدت میں کوئی فروخت نہیں۔',
+    noSalesRecorded: 'ابھی تک کوئی فروخت درج نہیں ہوئی۔',
+    noCustomersYet: 'ابھی تک کوئی کسٹمر نہیں۔',
+    noShopkeepersYet: 'ابھی تک کوئی دکاندار نہیں۔',
+    noSalesToShopkeepersYet: 'ابھی تک دکانداروں کو کوئی فروخت درج نہیں ہوئی۔',
+    noSuppliersYet: 'ابھی تک کوئی سپلائر نہیں۔',
+    noPurchasesYet: 'ابھی تک کوئی خریداری درج نہیں ہوئی۔',
+
+    productUpdated: 'پروڈکٹ اپ ڈیٹ ہو گئی',
+    productAdded: 'پروڈکٹ شامل ہو گئی',
+    productDeleted: 'پروڈکٹ حذف ہو گئی',
+    saleRecorded: 'فروخت درج ہو گئی',
+    saleUpdated: 'فروخت اپ ڈیٹ ہو گئی',
+    saleDeleted: 'فروخت حذف ہو گئی',
+    addProductFirst: 'پہلے ایک پروڈکٹ شامل کریں',
+    addAtLeastOneItem: 'کم از کم ایک درست آئٹم شامل کریں',
+    customerUpdated: 'کسٹمر اپ ڈیٹ ہو گیا',
+    customerAdded: 'کسٹمر شامل ہو گیا',
+    customerDeleted: 'کسٹمر حذف ہو گیا',
+    enterValidAmount: 'ایک درست رقم درج کریں',
+    paymentRecorded: 'ادائیگی درج ہو گئی',
+    shopkeeperUpdated: 'دکاندار اپ ڈیٹ ہو گیا',
+    shopkeeperAdded: 'دکاندار شامل ہو گیا',
+    shopkeeperDeleted: 'دکاندار حذف ہو گیا',
+    selectShopkeeperToast: 'ایک دکاندار منتخب کریں',
+    supplierUpdated: 'سپلائر اپ ڈیٹ ہو گیا',
+    supplierAdded: 'سپلائر شامل ہو گیا',
+    supplierDeleted: 'سپلائر حذف ہو گیا',
+    purchaseUpdated: 'خریداری اپ ڈیٹ ہو گئی',
+    purchaseRecordedStockUpdated: 'خریداری درج ہو گئی، اسٹاک اپ ڈیٹ ہو گیا',
+    purchaseDeleted: 'خریداری حذف ہو گئی',
+    addSupplierFirst: 'پہلے ایک سپلائر شامل کریں',
+    addShopkeeperFirst: 'پہلے ایک دکاندار شامل کریں',
+    notEnoughStockFor: 'کافی اسٹاک نہیں ہے:',
+
+    confirmDeleteCannotUndo: 'یہ واپس نہیں ہو سکتا۔',
+    confirmDeleteSaleBody: 'یہ فروخت حذف کریں؟ اسٹاک اور کسٹمر کے واجبات واپس ہو جائیں گے۔',
+    confirmDeleteShopkeeperSaleBody: 'یہ فروخت حذف کریں؟ اسٹاک اور واجبات واپس ہو جائیں گے۔',
+    confirmStillHasDue: 'کے ذمے ابھی بھی',
+    confirmDueDeleteAnyway: 'واجب الادا ہے۔ پھر بھی حذف کریں؟',
+    confirmDeleteCustomerPrefix: 'کسٹمر حذف کریں',
+    confirmDeleteShopkeeperPrefix: 'دکاندار حذف کریں',
+    confirmDeleteSupplierPrefix: 'سپلائر حذف کریں',
+    confirmDeleteSupplierSuffix: '؟ پرانی خریداریوں میں ان کا نام ویسے ہی نظر آتا رہے گا۔',
+    confirmDeletePurchasePrefix: 'یہ خریداری حذف کریں از',
+    confirmDeletePurchaseSuffix: '؟ اس سے شامل ہونے والا اسٹاک واپس لے لیا جائے گا۔',
+
+    statTodaySales: 'آج کی فروخت',
+    statSalesRecordedToday: 'آج درج شدہ فروخت',
+    statTotalDues: 'کل واجب الادا رقم',
+    statStockValue: 'اسٹاک کی مالیت',
+    statTotalCrates: 'کل کریٹس',
+    statTotalPcs: 'کل عدد',
+    statWeekSales: 'اس ہفتے کی فروخت',
+    statTotalProfit: 'کل منافع',
+    statCustomers: 'کسٹمرز',
+    statSuppliers: 'سپلائرز',
+    statAvgSale: 'اوسط فروخت قیمت',
+    statTopProduct: 'سب سے زیادہ فروخت ہونے والی پروڈکٹ',
+    statSalesInRange: 'اس مدت کی فروخت',
+    statProfitInRange: 'اس مدت کا منافع',
+    statSalesCount: 'فروخت کی تعداد',
+    statAverageSale: 'اوسط فروخت',
+
+    waInvoiceLabel: 'انوائس:',
+    waDateLabel: 'تاریخ:',
+    waCustomerLabel: 'کسٹمر:',
+    waShopkeeperLabel: 'دکاندار:',
+    waTotalLabel: 'کل:',
+    waPaidLabel: 'ادا شدہ:',
+    waDueLabel: 'واجب الادا:',
+    waStatusSettled: 'حیثیت: ادا شدہ',
+    waThanks: 'آپ کے کاروبار کا شکریہ!',
+    waShareTitle: 'ایچ ایم ٹریڈرز انوائس',
+  },
+};
+
+function tr(key) {
+  const dict = translations[state.lang] || translations.en;
+  return (dict && dict[key] != null) ? dict[key] : (translations.en[key] != null ? translations.en[key] : key);
+}
+
+function applyLanguage(lang) {
+  state.lang = lang;
+  document.documentElement.lang = lang === 'ur' ? 'ur' : 'en';
+  document.documentElement.dir = lang === 'ur' ? 'rtl' : 'ltr';
+  const dict = translations[lang] || translations.en;
+  document.querySelectorAll('[data-i18n]').forEach((el) => {
+    const key = el.dataset.i18n;
+    if (dict[key]) el.textContent = dict[key];
+  });
+  try { localStorage.setItem('hm_lang', lang); } catch (e) { /* ignore */ }
+  // Re-render the current page's title and content in the new language
+  if (typeof setView === 'function' && state.view) setView(state.view);
+}
+
+function initLanguage() {
+  let saved = 'en';
+  try { saved = localStorage.getItem('hm_lang') || 'en'; } catch (e) { /* ignore */ }
+  applyLanguage(saved);
+  const btn = document.getElementById('lang-toggle-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      applyLanguage(state.lang === 'ur' ? 'en' : 'ur');
+    });
+  }
+}
+
 const formatDateTime = (dateStr) => new Date(dateStr).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Formats a raw piece-count as "N crates + M pcs" using the product's crate size.
 function crateBreakdown(pcs, perCrate) {
   const size = Number(perCrate) > 0 ? Number(perCrate) : null;
-  if (!size) return `${pcs} pcs`;
+  if (!size) return `${pcs} ${tr('pcs')}`;
   const crates = Math.floor(pcs / size);
   const rem = pcs % size;
-  if (crates === 0) return `${rem} pcs`;
-  if (rem === 0) return `${crates} crate${crates !== 1 ? 's' : ''}`;
-  return `${crates} crate${crates !== 1 ? 's' : ''} + ${rem} pcs`;
+  const crateWord = tr(crates !== 1 && state.lang !== 'ur' ? 'crates' : 'crate');
+  if (crates === 0) return `${rem} ${tr('pcs')}`;
+  if (rem === 0) return `${crates} ${crateWord}`;
+  return `${crates} ${crateWord} + ${rem} ${tr('pcs')}`;
 }
 
 // Splits raw pcs into { crates, pcs } separately, using the product's crate size.
@@ -97,7 +547,7 @@ function guardDoubleSubmit(form) {
   if (btn.disabled) return null; // already submitting — caller should abort
   const original = btn.textContent;
   btn.disabled = true;
-  btn.textContent = 'Saving…';
+  btn.textContent = tr('saving');
   return () => { btn.disabled = false; btn.textContent = original; }; // call on error to re-enable
 }
 
@@ -178,12 +628,14 @@ function setView(view) {
   // eslint-disable-next-line no-unused-expressions
   void target.offsetWidth; // restart animation
   target.classList.add('view-enter');
-  const titles = { dashboard: 'Dashboard', reports: 'Reports', lowstock: 'Low Stock', recentsales: 'Recent Sales', inventory: 'Inventory', sales: 'Sales', customers: 'Customers & Dues', shopkeepers: 'Shopkeepers', suppliers: 'Suppliers & Purchases' };
+  const dict = translations[state.lang] || translations.en;
+  const titles = { dashboard: dict.navDashboard, reports: dict.navReports, lowstock: dict.navLowStock, recentsales: dict.navRecentSales, inventory: dict.navInventory, sales: dict.navSales, customers: dict.navCustomers, shopkeepers: dict.navShopkeepers, suppliers: dict.navSuppliers };
   document.getElementById('view-title').textContent = titles[view];
   renderAll();
 }
 
 document.getElementById('topbar-date').textContent = todayStr();
+initLanguage();
 
 /* ---------------- Firestore live sync ---------------- */
 let unsubscribers = [];
@@ -227,18 +679,18 @@ function renderLowStock() {
   const lowStock = state.products.filter((p) => p.stock <= (p.lowStockAt ?? 5));
   el.innerHTML = `
     <div class="panel">
-      <div class="panel-head"><h3>Low Stock</h3></div>
+      <div class="panel-head"><h3>${tr('lowStockHeading')}</h3></div>
       ${lowStock.length ? `
-        <table><thead><tr><th>Product</th><th>Category</th><th>Stock left</th><th>Reorder at</th><th></th></tr></thead>
+        <table><thead><tr><th>${tr('colProduct')}</th><th>${tr('colCategory')}</th><th>${tr('colStockLeft')}</th><th>${tr('colReorderAt')}</th><th></th></tr></thead>
         <tbody>${lowStock.map((p) => `
           <tr>
-            <td data-label="Product">${p.name}</td>
-            <td data-label="Category">${p.category || '—'}</td>
-            <td data-label="Stock" class="mono">${crateBreakdown(p.stock, p.unitsPerCrate)}</td>
-            <td data-label="Reorder at" class="mono">${p.lowStockAt ?? 5} pcs</td>
-            <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
+            <td data-label="${tr('colProduct')}">${p.name}</td>
+            <td data-label="${tr('colCategory')}">${p.category || '—'}</td>
+            <td data-label="${tr('colStock')}" class="mono">${crateBreakdown(p.stock, p.unitsPerCrate)}</td>
+            <td data-label="${tr('colReorderAt')}" class="mono">${p.lowStockAt ?? 5} ${tr('pcs')}</td>
+            <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">${tr('edit')}</button></td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">Nothing running low right now.</div>`}
+      ` : `<div class="empty-state">${tr('nothingLowStock')}</div>`}
     </div>
   `;
 }
@@ -287,33 +739,33 @@ function renderReports() {
 
   el.innerHTML = `
     <div class="panel">
-      <div class="panel-head"><h3>Date Range</h3></div>
+      <div class="panel-head"><h3>${tr('dateRangeHeading')}</h3></div>
       <div style="display:flex; gap:14px; flex-wrap:wrap; align-items:flex-end; padding:16px 20px;">
-        <label style="margin:0;">From<input type="date" id="rep-from" value="${state.reportFrom}" /></label>
-        <label style="margin:0;">To<input type="date" id="rep-to" value="${state.reportTo}" /></label>
-        <button class="btn small" id="rep-apply">Apply</button>
-        <button class="btn secondary small" id="rep-last7">Last 7 days</button>
-        <button class="btn secondary small" id="rep-last30">Last 30 days</button>
-        <button class="btn secondary small" id="rep-thismonth">This month</button>
+        <label style="margin:0;">${tr('fromLabel')}<input type="date" id="rep-from" value="${state.reportFrom}" /></label>
+        <label style="margin:0;">${tr('toLabel')}<input type="date" id="rep-to" value="${state.reportTo}" /></label>
+        <button class="btn small" id="rep-apply">${tr('applyBtn')}</button>
+        <button class="btn secondary small" id="rep-last7">${tr('last7Btn')}</button>
+        <button class="btn secondary small" id="rep-last30">${tr('last30Btn')}</button>
+        <button class="btn secondary small" id="rep-thismonth">${tr('thisMonthBtn')}</button>
       </div>
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(4,1fr);">
-      <div class="stat-card"><div class="label">Sales in Range</div><div class="value" data-countup="${totalSales}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Profit in Range</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Sales Count</div><div class="value" data-countup="${inRange.length}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">Average Sale</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statSalesInRange')}</div><div class="value" data-countup="${totalSales}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statProfitInRange')}</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statSalesCount')}</div><div class="value" data-countup="${inRange.length}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">${tr('statAverageSale')}</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><h3>Top Products in Range</h3></div>
+      <div class="panel-head"><h3>${tr('topProductsHeading')}</h3></div>
       ${topProducts.length ? `
-        <table><thead><tr><th>Product</th><th>Qty Sold</th><th>Revenue</th></tr></thead>
+        <table><thead><tr><th>${tr('colProduct')}</th><th>${tr('colQtySold')}</th><th>${tr('colRevenue')}</th></tr></thead>
         <tbody>${topProducts.map(([name, d]) => `
           <tr>
-            <td data-label="Product">${name}</td>
-            <td data-label="Qty Sold" class="mono">${d.qty}</td>
-            <td data-label="Revenue" class="mono">${money(d.revenue)}</td>
+            <td data-label="${tr('colProduct')}">${name}</td>
+            <td data-label="${tr('colQtySold')}" class="mono">${d.qty}</td>
+            <td data-label="${tr('colRevenue')}" class="mono">${money(d.revenue)}</td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No sales in this range.</div>`}
+      ` : `<div class="empty-state">${tr('noSalesInRange')}</div>`}
     </div>
   `;
   animateCountUps(el);
@@ -348,8 +800,8 @@ function renderRecentSales() {
   el.innerHTML = `
     <div class="panel">
       <div class="panel-head">
-        <h3>Recent Sales</h3>
-        <span class="mono" style="font-size:13px; color:var(--muted);">${recent.length} shown · ${money(recentTotal)} total</span>
+        <h3>${tr('recentSalesHeading')}</h3>
+        <span class="mono" style="font-size:13px; color:var(--muted);">${recent.length} · ${money(recentTotal)}</span>
       </div>
       ${renderSalesTable(recent)}
     </div>
@@ -398,23 +850,23 @@ function renderDashboard() {
     qtyByProduct[i.name] = (qtyByProduct[i.name] || 0) + i.qty;
   }));
   const topProductEntry = Object.entries(qtyByProduct).sort((a, b) => b[1] - a[1])[0];
-  const topProductLabel = topProductEntry ? `${topProductEntry[0]} (${topProductEntry[1]} sold)` : '—';
+  const topProductLabel = topProductEntry ? `${topProductEntry[0]} (${topProductEntry[1]})` : '—';
 
 
   el.innerHTML = `
     <div class="stat-grid">
-      <div class="stat-card"><div class="label">Today's Sales</div><div class="value" data-countup="${todayTotal}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Sales Recorded Today</div><div class="value" data-countup="${todaysSales.length}" data-format="int">0</div></div>
-      <div class="stat-card ${totalDue > 0 ? 'warn' : ''}"><div class="label">Total Dues Owed</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Stock Value</div><div class="value" data-countup="${stockValue}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Total Crates</div><div class="value" data-countup="${totalCrates}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">Total Pcs</div><div class="value" data-countup="${totalPcs}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">This Week's Sales</div><div class="value" data-countup="${weekTotal}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Total Profit</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Customers</div><div class="value" data-countup="${state.customers.length}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">Suppliers</div><div class="value" data-countup="${state.suppliers.length}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">Average Sale Value</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">Top-Selling Product</div><div class="value" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
+      <div class="stat-card"><div class="label">${tr('statTodaySales')}</div><div class="value" data-countup="${todayTotal}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statSalesRecordedToday')}</div><div class="value" data-countup="${todaysSales.length}" data-format="int">0</div></div>
+      <div class="stat-card ${totalDue > 0 ? 'warn' : ''}"><div class="label">${tr('statTotalDues')}</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statStockValue')}</div><div class="value" data-countup="${stockValue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statTotalCrates')}</div><div class="value" data-countup="${totalCrates}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">${tr('statTotalPcs')}</div><div class="value" data-countup="${totalPcs}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">${tr('statWeekSales')}</div><div class="value" data-countup="${weekTotal}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statTotalProfit')}</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statCustomers')}</div><div class="value" data-countup="${state.customers.length}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">${tr('statSuppliers')}</div><div class="value" data-countup="${state.suppliers.length}" data-format="int">0</div></div>
+      <div class="stat-card"><div class="label">${tr('statAvgSale')}</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
+      <div class="stat-card"><div class="label">${tr('statTopProduct')}</div><div class="value" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
     </div>
   `;
   animateCountUps(el);
@@ -429,8 +881,8 @@ function renderInventory() {
   if (!state.products.length) {
     el.innerHTML = `
       <div class="panel">
-        <div class="panel-head"><h3>Products</h3><button class="btn small" id="add-product-btn">+ Add product</button></div>
-        <div class="empty-state">No products yet. Add your first bottle product to get started.</div>
+        <div class="panel-head"><h3>${tr('productsHeading')}</h3><button class="btn small" id="add-product-btn">${tr('addProductBtn')}</button></div>
+        <div class="empty-state">${tr('noProductsEmpty')}</div>
       </div>
     `;
     document.getElementById('add-product-btn').addEventListener('click', () => openProductModal());
@@ -457,31 +909,31 @@ function renderInventory() {
 
   const tabs = ['All', ...categoryNames];
   const activeProducts = state.inventoryTab === 'All' ? state.products : groups[state.inventoryTab];
-  const t = categoryTotals(activeProducts);
+  const catTotals = categoryTotals(activeProducts);
 
   el.innerHTML = `
     <div class="category-tabs">
       ${tabs.map((cat) => `<button class="cat-tab ${cat === state.inventoryTab ? 'active' : ''}" data-cat="${cat}">${cat}</button>`).join('')}
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:18px;">
-      <div class="stat-card"><div class="label">${state.inventoryTab} — Crates</div><div class="value">${t.crates}</div></div>
-      <div class="stat-card"><div class="label">${state.inventoryTab} — Pcs</div><div class="value">${t.pcs}</div></div>
+      <div class="stat-card"><div class="label">${state.inventoryTab} — ${tr('colCrates')}</div><div class="value">${catTotals.crates}</div></div>
+      <div class="stat-card"><div class="label">${state.inventoryTab} — ${tr('colPcs')}</div><div class="value">${catTotals.pcs}</div></div>
     </div>
     <div class="panel">
-      <div class="panel-head"><h3>Products</h3><button class="btn small" id="add-product-btn">+ Add product</button></div>
-      <table><thead><tr><th>Name</th><th>Category</th><th>Crates</th><th>Pcs</th><th>Cost</th><th>Sale price</th><th></th></tr></thead>
+      <div class="panel-head"><h3>${tr('productsHeading')}</h3><button class="btn small" id="add-product-btn">${tr('addProductBtn')}</button></div>
+      <table><thead><tr><th>${tr('colName')}</th><th>${tr('colCategory')}</th><th>${tr('colCrates')}</th><th>${tr('colPcs')}</th><th>${tr('colCost')}</th><th>${tr('colSalePrice')}</th><th></th></tr></thead>
       <tbody>${activeProducts.map((p) => {
         const split = splitCratesPcs(p.stock, p.unitsPerCrate);
         const low = p.stock <= (p.lowStockAt ?? 5);
         return `
         <tr>
-          <td data-label="Name">${p.name}</td>
-          <td data-label="Category">${p.category || '—'}</td>
-          <td data-label="Crates" class="mono">${split.crates === null ? '—' : (low ? `<span class="pill warn">${split.crates}</span>` : split.crates)}</td>
-          <td data-label="Pcs" class="mono">${low && split.crates === null ? `<span class="pill warn">${split.pcs}</span>` : split.pcs}</td>
-          <td data-label="Cost" class="mono">${money(p.costPrice)}</td>
-          <td data-label="Sale price" class="mono">${money(p.salePrice)}</td>
-          <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">Edit</button></td>
+          <td data-label="${tr('colName')}">${p.name}</td>
+          <td data-label="${tr('colCategory')}">${p.category || '—'}</td>
+          <td data-label="${tr('colCrates')}" class="mono">${split.crates === null ? '—' : (low ? `<span class="pill warn">${split.crates}</span>` : split.crates)}</td>
+          <td data-label="${tr('colPcs')}" class="mono">${low && split.crates === null ? `<span class="pill warn">${split.pcs}</span>` : split.pcs}</td>
+          <td data-label="${tr('colCost')}" class="mono">${money(p.costPrice)}</td>
+          <td data-label="${tr('colSalePrice')}" class="mono">${money(p.salePrice)}</td>
+          <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">${tr('edit')}</button></td>
         </tr>`;
       }).join('')}</tbody></table>
     </div>
@@ -502,24 +954,24 @@ function openProductModal(existing) {
   const initialPcs = p.unitsPerCrate ? p.stock % p.unitsPerCrate : p.stock;
 
   showModal(`
-    <h3>${isEdit ? 'Edit product' : 'Add product'}</h3>
+    <h3>${isEdit ? tr('editProductTitle') : tr('addProductTitle')}</h3>
     <form id="product-form">
-      <label>Product name<input required id="p-name" value="${p.name}" placeholder="e.g. 500ml Water Bottle" /></label>
-      <label>Category<input id="p-category" value="${p.category}" placeholder="e.g. Water, Juice, Glass" /></label>
+      <label>${tr('productNameLabel')}<input required id="p-name" value="${p.name}" placeholder="e.g. 500ml Water Bottle" /></label>
+      <label>${tr('categoryLabel')}<input id="p-category" value="${p.category}" placeholder="e.g. Water, Juice, Glass" /></label>
 
       <div class="line-item-row" style="grid-template-columns:1fr 1fr;">
-        <label style="margin:0;">Total Crates<input type="number" id="p-crates" value="${initialCrates}" min="0" /></label>
-        <label style="margin:0;">Total Pcs<input type="number" id="p-pcs" value="${initialPcs}" min="0" /></label>
+        <label style="margin:0;">${tr('totalCratesLabel')}<input type="number" id="p-crates" value="${initialCrates}" min="0" /></label>
+        <label style="margin:0;">${tr('totalPcsLabel')}<input type="number" id="p-pcs" value="${initialPcs}" min="0" /></label>
       </div>
-      <label>Pieces per crate <span style="font-weight:400;">— how many pcs make up 1 crate (leave blank if sold loose only)</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
+      <label>${tr('piecesPerCrateLabel')} <span style="font-weight:400;">${tr('piecesPerCrateHint')}</span><input type="number" id="p-percrate" value="${p.unitsPerCrate || ''}" placeholder="e.g. 12 or 24" /></label>
 
-      <label>Low stock alert at (pcs)<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
-      <label>Cost price (per pc)<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
-      <label>Sale price (per pc)<input required type="number" id="p-sale" value="${p.salePrice}" /></label>
+      <label>${tr('lowStockAlertLabel')}<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
+      <label>${tr('costPriceLabel')}<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
+      <label>${tr('salePriceLabel')}<input required type="number" id="p-sale" value="${p.salePrice}" /></label>
       <div class="modal-actions">
-        ${isEdit ? `<button type="button" class="btn danger" id="p-delete">Delete</button>` : ''}
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add product'}</button>
+        ${isEdit ? `<button type="button" class="btn danger" id="p-delete">${tr('delete')}</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${isEdit ? tr('saveChanges') : tr('addProductBtn').replace('+ ', '')}</button>
       </div>
     </form>
   `);
@@ -548,7 +1000,7 @@ function openProductModal(existing) {
     e.preventDefault();
     const reEnable = guardDoubleSubmit(e.target);
     if (!reEnable) return; // already submitting
-    const perCrate = Number(document.getElementById('p-percrate').value) || null;
+    const perCrate = Number(percrateInput.value) || null;
     const crates = Number(document.getElementById('p-crates').value) || 0;
     const looseP = Number(document.getElementById('p-pcs').value) || 0;
     const stock = perCrate ? (crates * perCrate + looseP) : looseP;
@@ -565,23 +1017,23 @@ function openProductModal(existing) {
     try {
       if (isEdit) {
         await db.collection('products').doc(existing.id).update(data);
-        toast('Product updated');
+        toast(tr('productUpdated'));
       } else {
         await db.collection('products').add(data);
-        toast('Product added');
+        toast(tr('productAdded'));
       }
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 
   if (isEdit) {
     document.getElementById('p-delete').addEventListener('click', async () => {
-      if (confirm(`Delete "${p.name}"? This cannot be undone.`)) {
+      if (confirm(`${tr('delete')} "${p.name}"? ${tr('confirmDeleteCannotUndo')}`)) {
         await db.collection('products').doc(existing.id).delete();
-        toast('Product deleted');
+        toast(tr('productDeleted'));
         closeModal();
       }
     });
@@ -597,19 +1049,19 @@ window.editProduct = (id) => {
    SALES
    ============================================================ */
 function renderSalesTable(sales) {
-  if (!sales.length) return `<div class="empty-state">No sales recorded yet.</div>`;
+  if (!sales.length) return `<div class="empty-state">${tr('noSalesRecorded')}</div>`;
   return `
-    <table><thead><tr><th>Invoice</th><th>Date</th><th>Customer</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+    <table><thead><tr><th>${tr('colInvoice')}</th><th>${tr('colDate')}</th><th>${tr('colCustomer')}</th><th>${tr('colItems')}</th><th>${tr('colTotal')}</th><th>${tr('colPaid')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
     <tbody>${sales.map((s) => `
       <tr>
-        <td data-label="Invoice" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
-        <td data-label="Date">${formatDateTime(s.date)}</td>
-        <td data-label="Customer">${s.customerName || 'Walk-in'}</td>
-        <td data-label="Items">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
-        <td data-label="Total" class="mono">${money(s.total)}</td>
-        <td data-label="Paid" class="mono">${money(s.paid)}</td>
-        <td data-label="Due">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">Settled</span>`}</td>
-        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">Edit</button> <button class="btn secondary small" onclick="shareSaleWhatsApp('${s.id}')" title="Share on WhatsApp">Share</button></td>
+        <td data-label="${tr('colInvoice')}" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
+        <td data-label="${tr('colDate')}">${formatDateTime(s.date)}</td>
+        <td data-label="${tr('colCustomer')}">${s.customerName || tr('walkIn')}</td>
+        <td data-label="${tr('colItems')}">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+        <td data-label="${tr('colTotal')}" class="mono">${money(s.total)}</td>
+        <td data-label="${tr('colPaid')}" class="mono">${money(s.paid)}</td>
+        <td data-label="${tr('colDue')}">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">${tr('settled')}</span>`}</td>
+        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">${tr('edit')}</button> <button class="btn secondary small" onclick="shareSaleWhatsApp('${s.id}')" title="Share on WhatsApp">${tr('share')}</button></td>
       </tr>`).join('')}</tbody></table>
   `;
 }
@@ -619,7 +1071,7 @@ function renderSales() {
   const sorted = state.sales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   el.innerHTML = `
     <div class="panel">
-      <div class="panel-head"><h3>All sales</h3><button class="btn small" id="add-sale-btn">+ Record sale</button></div>
+      <div class="panel-head"><h3>${tr('allSalesHeading')}</h3><button class="btn small" id="add-sale-btn">${tr('recordSaleBtn')}</button></div>
       ${renderSalesTable(sorted)}
     </div>
   `;
@@ -627,25 +1079,25 @@ function renderSales() {
 }
 
 function openSaleModal() {
-  if (!state.products.length) { toast('Add a product first'); return; }
+  if (!state.products.length) { toast(tr('addProductFirst')); return; }
   const rowId = uid();
   showModal(`
-    <h3>Record sale</h3>
+    <h3>${tr('recordSaleTitle')}</h3>
     <form id="sale-form">
-      <label>Customer
+      <label>${tr('customerLabel')}
         <select id="s-customer">
-          <option value="">Walk-in (no account)</option>
+          <option value="">${tr('walkIn')}</option>
           ${state.customers.map((c) => `<option value="${c.id}">${c.name}</option>`).join('')}
         </select>
       </label>
       <div class="line-items" id="line-items">
         ${saleLineRow(rowId)}
       </div>
-      <button type="button" class="btn secondary small" id="add-line-btn" style="align-self:flex-start;">+ Add another item</button>
-      <label>Amount paid now<input type="number" id="s-paid" value="0" required /></label>
+      <button type="button" class="btn secondary small" id="add-line-btn" style="align-self:flex-start;">${tr('addAnotherItem')}</button>
+      <label>${tr('amountPaidNowLabel')}<input type="number" id="s-paid" value="0" required /></label>
       <div class="modal-actions">
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save sale</button>
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${tr('saveSaleBtn')}</button>
       </div>
     </form>
   `);
@@ -666,12 +1118,12 @@ function openSaleModal() {
       return { productId, name: p.name, qty, price: p.salePrice, lineTotal: p.salePrice * qty };
     }).filter((i) => i.productId && i.qty > 0);
 
-    if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
+    if (!items.length) { toast(tr('addAtLeastOneItem')); reEnable(); return; }
 
     // check stock
     for (const item of items) {
       const p = state.products.find((x) => x.id === item.productId);
-      if (item.qty > p.stock) { toast(`Not enough stock for ${p.name}`); reEnable(); return; }
+      if (item.qty > p.stock) { toast(`${tr('notEnoughStockFor')} ${p.name}`); reEnable(); return; }
     }
 
     const total = items.reduce((a, i) => a + i.lineTotal, 0);
@@ -700,11 +1152,11 @@ function openSaleModal() {
     }
     try {
       await batch.commit();
-      toast('Sale recorded');
+      toast(tr('saleRecorded'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 }
@@ -713,11 +1165,11 @@ function saleLineRow(rowId) {
   return `
     <div class="line-item-row" data-row="${rowId}">
       <select class="li-product">
-        <option value="">Select product…</option>
-        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)} left)</option>`).join('')}
+        <option value="">${tr('selectProduct')}</option>
+        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)})</option>`).join('')}
       </select>
       <input class="li-qty" type="number" min="1" value="1" placeholder="Qty" />
-      <span class="mono" style="font-size:12px;color:var(--muted);">unit price auto</span>
+      <span class="mono" style="font-size:12px;color:var(--muted);">${tr('unitPriceAuto')}</span>
       <button type="button" class="btn secondary small" onclick="this.closest('.line-item-row').remove()">✕</button>
     </div>
   `;
@@ -727,14 +1179,14 @@ window.editSale = (id) => {
   const s = state.sales.find((x) => x.id === id);
   if (!s) return;
   showModal(`
-    <h3>Edit sale ${s.invoiceNo ? formatInvoice(s.invoiceNo) : ''} — ${s.customerName || 'Walk-in'}</h3>
-    <p style="color:var(--muted); font-size:14px; margin:0;">Items: ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>Total: <strong class="mono">${money(s.total)}</strong></p>
+    <h3>${tr('editSaleTitlePrefix')} ${s.invoiceNo ? formatInvoice(s.invoiceNo) : ''} — ${s.customerName || tr('walkIn')}</h3>
+    <p style="color:var(--muted); font-size:14px; margin:0;">${tr('itemsLabel')} ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>${tr('totalLabelColon')} <strong class="mono">${money(s.total)}</strong></p>
     <form id="edit-sale-form">
-      <label>Amount paid<input required type="number" id="es-paid" value="${s.paid}" /></label>
+      <label>${tr('amountPaidNowLabel')}<input required type="number" id="es-paid" value="${s.paid}" /></label>
       <div class="modal-actions">
-        <button type="button" class="btn danger" id="es-delete">Delete sale</button>
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save changes</button>
+        <button type="button" class="btn danger" id="es-delete">${tr('deleteSaleBtn')}</button>
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${tr('saveChanges')}</button>
       </div>
     </form>
   `);
@@ -754,16 +1206,16 @@ window.editSale = (id) => {
     }
     try {
       await batch.commit();
-      toast('Sale updated');
+      toast(tr('saleUpdated'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 
   document.getElementById('es-delete').addEventListener('click', async () => {
-    if (!confirm('Delete this sale? Stock and customer dues will be reversed.')) return;
+    if (!confirm(tr('confirmDeleteSaleBody'))) return;
     const batch = db.batch();
     batch.delete(db.collection('sales').doc(s.id));
     s.items.forEach((i) => {
@@ -775,7 +1227,7 @@ window.editSale = (id) => {
       if (customer) batch.update(db.collection('customers').doc(customer.id), { totalDue: Math.max((customer.totalDue || 0) - s.due, 0) });
     }
     await batch.commit();
-    toast('Sale deleted');
+    toast(tr('saleDeleted'));
     closeModal();
   });
 };
@@ -786,17 +1238,17 @@ window.shareSaleWhatsApp = async (id) => {
   const dateStr = new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const lines = [
     `*H.M Traders*`,
-    s.invoiceNo ? `Invoice: ${formatInvoice(s.invoiceNo)}` : '',
-    `Date: ${dateStr}`,
-    `Customer: ${s.customerName || 'Walk-in'}`,
+    s.invoiceNo ? `${tr('waInvoiceLabel')} ${formatInvoice(s.invoiceNo)}` : '',
+    `${tr('waDateLabel')} ${dateStr}`,
+    `${tr('waCustomerLabel')} ${s.customerName || tr('walkIn')}`,
     '',
     ...s.items.map((i) => `${i.name} ×${i.qty} — ${money(i.lineTotal)}`),
     '',
-    `Total: ${money(s.total)}`,
-    `Paid: ${money(s.paid)}`,
-    s.due > 0 ? `Due: ${money(s.due)}` : `Status: Settled`,
+    `${tr('waTotalLabel')} ${money(s.total)}`,
+    `${tr('waPaidLabel')} ${money(s.paid)}`,
+    s.due > 0 ? `${tr('waDueLabel')} ${money(s.due)}` : tr('waStatusSettled'),
     '',
-    'Thank you for your business!',
+    tr('waThanks'),
   ].filter(Boolean);
   const text = lines.join('\n');
 
@@ -805,7 +1257,7 @@ window.shareSaleWhatsApp = async (id) => {
   // where WhatsApp usually isn't a registered share target, and go straight there instead.
   if (navigator.share && !isDesktopDevice()) {
     try {
-      await navigator.share({ title: 'H.M Traders Invoice', text });
+      await navigator.share({ title: tr('waShareTitle'), text });
       return;
     } catch (err) {
       if (err && err.name === 'AbortError') return; // user cancelled the share sheet
@@ -828,20 +1280,20 @@ function renderCustomers() {
   const el = document.getElementById('view-customers');
   el.innerHTML = `
     <div class="panel">
-      <div class="panel-head"><h3>Customers</h3><button class="btn small" id="add-customer-btn">+ Add customer</button></div>
+      <div class="panel-head"><h3>${tr('customersHeading')}</h3><button class="btn small" id="add-customer-btn">${tr('addCustomerBtn')}</button></div>
       ${state.customers.length ? `
-        <table><thead><tr><th>Name</th><th>Phone</th><th>Due</th><th></th></tr></thead>
+        <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
         <tbody>${state.customers.map((c) => `
           <tr>
-            <td data-label="Name">${c.name}</td>
-            <td data-label="Phone">${c.phone || '—'}</td>
-            <td data-label="Due">${c.totalDue > 0 ? `<span class="pill warn">${money(c.totalDue)}</span>` : `<span class="pill ok">Clear</span>`}</td>
+            <td data-label="${tr('colName')}">${c.name}</td>
+            <td data-label="${tr('colPhone')}">${c.phone || '—'}</td>
+            <td data-label="${tr('colDue')}">${c.totalDue > 0 ? `<span class="pill warn">${money(c.totalDue)}</span>` : `<span class="pill ok">${tr('clearStatus')}</span>`}</td>
             <td data-label="">
-              ${c.totalDue > 0 ? `<button class="btn secondary small" onclick="openPaymentModal('${c.id}')">Record payment</button>` : ''}
-              <button class="btn secondary small" onclick="editCustomer('${c.id}')">Edit</button>
+              ${c.totalDue > 0 ? `<button class="btn secondary small" onclick="openPaymentModal('${c.id}')">${tr('recordPayment')}</button>` : ''}
+              <button class="btn secondary small" onclick="editCustomer('${c.id}')">${tr('edit')}</button>
             </td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No customers yet.</div>`}
+      ` : `<div class="empty-state">${tr('noCustomersYet')}</div>`}
     </div>
   `;
   document.getElementById('add-customer-btn').addEventListener('click', () => openCustomerModal());
@@ -851,14 +1303,14 @@ function openCustomerModal(existing) {
   const isEdit = !!existing;
   const c = existing || { name: '', phone: '' };
   showModal(`
-    <h3>${isEdit ? 'Edit customer' : 'Add customer'}</h3>
+    <h3>${isEdit ? tr('editCustomerTitle') : tr('addCustomerTitle')}</h3>
     <form id="customer-form">
-      <label>Name<input required id="c-name" value="${c.name}" /></label>
-      <label>Phone<input id="c-phone" value="${c.phone || ''}" /></label>
+      <label>${tr('nameLabel')}<input required id="c-name" value="${c.name}" /></label>
+      <label>${tr('phoneLabel')}<input id="c-phone" value="${c.phone || ''}" /></label>
       <div class="modal-actions">
-        ${isEdit ? `<button type="button" class="btn danger" id="c-delete">Delete</button>` : ''}
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add customer'}</button>
+        ${isEdit ? `<button type="button" class="btn danger" id="c-delete">${tr('delete')}</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${isEdit ? tr('saveChanges') : tr('addCustomerBtn').replace('+ ', '')}</button>
       </div>
     </form>
   `);
@@ -873,23 +1325,23 @@ function openCustomerModal(existing) {
     try {
       if (isEdit) {
         await db.collection('customers').doc(existing.id).update(data);
-        toast('Customer updated');
+        toast(tr('customerUpdated'));
       } else {
         await db.collection('customers').add({ ...data, totalDue: 0 });
-        toast('Customer added');
+        toast(tr('customerAdded'));
       }
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
   if (isEdit) {
     document.getElementById('c-delete').addEventListener('click', async () => {
-      if (c.totalDue > 0 && !confirm(`${c.name} still has ${money(c.totalDue)} due. Delete anyway?`)) return;
-      if (c.totalDue <= 0 && !confirm(`Delete customer "${c.name}"?`)) return;
+      if (c.totalDue > 0 && !confirm(`${c.name} ${tr('confirmStillHasDue')} ${money(c.totalDue)} ${tr('confirmDueDeleteAnyway')}`)) return;
+      if (c.totalDue <= 0 && !confirm(`${tr('confirmDeleteCustomerPrefix')} "${c.name}"?`)) return;
       await db.collection('customers').doc(existing.id).delete();
-      toast('Customer deleted');
+      toast(tr('customerDeleted'));
       closeModal();
     });
   }
@@ -903,13 +1355,13 @@ window.editCustomer = (id) => {
 window.openPaymentModal = (customerId) => {
   const c = state.customers.find((x) => x.id === customerId);
   showModal(`
-    <h3>Record payment — ${c.name}</h3>
+    <h3>${tr('recordPaymentPrefix')} — ${c.name}</h3>
     <form id="payment-form">
-      <p style="color:var(--muted); font-size:14px; margin:0;">Current due: <strong class="mono">${money(c.totalDue)}</strong></p>
-      <label>Amount received<input required type="number" max="${c.totalDue}" id="pay-amount" /></label>
+      <p style="color:var(--muted); font-size:14px; margin:0;">${tr('currentDueLabel')} <strong class="mono">${money(c.totalDue)}</strong></p>
+      <label>${tr('amountReceivedLabel')}<input required type="number" max="${c.totalDue}" id="pay-amount" /></label>
       <div class="modal-actions">
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save payment</button>
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${tr('savePaymentBtn')}</button>
       </div>
     </form>
   `);
@@ -918,14 +1370,14 @@ window.openPaymentModal = (customerId) => {
     const reEnable = guardDoubleSubmit(e.target);
     if (!reEnable) return;
     const amt = Number(document.getElementById('pay-amount').value);
-    if (amt <= 0 || amt > c.totalDue) { toast('Enter a valid amount'); reEnable(); return; }
+    if (amt <= 0 || amt > c.totalDue) { toast(tr('enterValidAmount')); reEnable(); return; }
     try {
       await db.collection('customers').doc(c.id).update({ totalDue: c.totalDue - amt });
-      toast('Payment recorded');
+      toast(tr('paymentRecorded'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 };
@@ -938,37 +1390,37 @@ function renderShopkeepers() {
   const sales = state.shopkeeperSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   el.innerHTML = `
     <div class="panel">
-      <div class="panel-head"><h3>Shopkeepers</h3><button class="btn small" id="add-shopkeeper-btn">+ Add shopkeeper</button></div>
+      <div class="panel-head"><h3>${tr('shopkeepersHeading')}</h3><button class="btn small" id="add-shopkeeper-btn">${tr('addShopkeeperBtn')}</button></div>
       ${state.shopkeepers.length ? `
-        <table><thead><tr><th>Name</th><th>Phone</th><th>Due</th><th></th></tr></thead>
+        <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
         <tbody>${state.shopkeepers.map((k) => `
           <tr>
-            <td data-label="Name">${k.name}</td>
-            <td data-label="Phone">${k.phone || '—'}</td>
-            <td data-label="Due">${k.totalDue > 0 ? `<span class="pill warn">${money(k.totalDue)}</span>` : `<span class="pill ok">Clear</span>`}</td>
+            <td data-label="${tr('colName')}">${k.name}</td>
+            <td data-label="${tr('colPhone')}">${k.phone || '—'}</td>
+            <td data-label="${tr('colDue')}">${k.totalDue > 0 ? `<span class="pill warn">${money(k.totalDue)}</span>` : `<span class="pill ok">${tr('clearStatus')}</span>`}</td>
             <td data-label="">
-              ${k.totalDue > 0 ? `<button class="btn secondary small" onclick="openShopkeeperPaymentModal('${k.id}')">Record payment</button>` : ''}
-              <button class="btn secondary small" onclick="editShopkeeper('${k.id}')">Edit</button>
+              ${k.totalDue > 0 ? `<button class="btn secondary small" onclick="openShopkeeperPaymentModal('${k.id}')">${tr('recordPayment')}</button>` : ''}
+              <button class="btn secondary small" onclick="editShopkeeper('${k.id}')">${tr('edit')}</button>
             </td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No shopkeepers yet.</div>`}
+      ` : `<div class="empty-state">${tr('noShopkeepersYet')}</div>`}
     </div>
     <div class="panel">
-      <div class="panel-head"><h3>Sales to Shopkeepers</h3><button class="btn small" id="add-shopkeeper-sale-btn">+ Record sale</button></div>
+      <div class="panel-head"><h3>${tr('salesToShopkeepersHeading')}</h3><button class="btn small" id="add-shopkeeper-sale-btn">${tr('recordSaleBtn')}</button></div>
       ${sales.length ? `
-        <table><thead><tr><th>Invoice</th><th>Date</th><th>Shopkeeper</th><th>Items</th><th>Total</th><th>Paid</th><th>Due</th><th></th></tr></thead>
+        <table><thead><tr><th>${tr('colInvoice')}</th><th>${tr('colDate')}</th><th>${tr('colShopkeeperCol')}</th><th>${tr('colItems')}</th><th>${tr('colTotal')}</th><th>${tr('colPaid')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
         <tbody>${sales.map((s) => `
           <tr>
-            <td data-label="Invoice" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
-            <td data-label="Date">${formatDateTime(s.date)}</td>
-            <td data-label="Shopkeeper">${s.shopkeeperName}</td>
-            <td data-label="Items">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
-            <td data-label="Total" class="mono">${money(s.total)}</td>
-            <td data-label="Paid" class="mono">${money(s.paid)}</td>
-            <td data-label="Due">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">Settled</span>`}</td>
-            <td data-label=""><button class="btn secondary small" onclick="editShopkeeperSale('${s.id}')">Edit</button> <button class="btn secondary small" onclick="shareShopkeeperSaleWhatsApp('${s.id}')">Share</button></td>
+            <td data-label="${tr('colInvoice')}" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
+            <td data-label="${tr('colDate')}">${formatDateTime(s.date)}</td>
+            <td data-label="${tr('colShopkeeperCol')}">${s.shopkeeperName}</td>
+            <td data-label="${tr('colItems')}">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+            <td data-label="${tr('colTotal')}" class="mono">${money(s.total)}</td>
+            <td data-label="${tr('colPaid')}" class="mono">${money(s.paid)}</td>
+            <td data-label="${tr('colDue')}">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">${tr('settled')}</span>`}</td>
+            <td data-label=""><button class="btn secondary small" onclick="editShopkeeperSale('${s.id}')">${tr('edit')}</button> <button class="btn secondary small" onclick="shareShopkeeperSaleWhatsApp('${s.id}')">${tr('share')}</button></td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No sales to shopkeepers recorded yet.</div>`}
+      ` : `<div class="empty-state">${tr('noSalesToShopkeepersYet')}</div>`}
     </div>
   `;
   document.getElementById('add-shopkeeper-btn').addEventListener('click', () => openShopkeeperModal());
@@ -979,14 +1431,14 @@ function openShopkeeperModal(existing) {
   const isEdit = !!existing;
   const k = existing || { name: '', phone: '' };
   showModal(`
-    <h3>${isEdit ? 'Edit shopkeeper' : 'Add shopkeeper'}</h3>
+    <h3>${isEdit ? tr('editShopkeeperTitle') : tr('addShopkeeperTitle')}</h3>
     <form id="shopkeeper-form">
-      <label>Name<input required id="k-name" value="${k.name}" /></label>
-      <label>Phone<input id="k-phone" value="${k.phone || ''}" /></label>
+      <label>${tr('nameLabel')}<input required id="k-name" value="${k.name}" /></label>
+      <label>${tr('phoneLabel')}<input id="k-phone" value="${k.phone || ''}" /></label>
       <div class="modal-actions">
-        ${isEdit ? `<button type="button" class="btn danger" id="k-delete">Delete</button>` : ''}
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add shopkeeper'}</button>
+        ${isEdit ? `<button type="button" class="btn danger" id="k-delete">${tr('delete')}</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${isEdit ? tr('saveChanges') : tr('addShopkeeperBtn').replace('+ ', '')}</button>
       </div>
     </form>
   `);
@@ -1001,23 +1453,23 @@ function openShopkeeperModal(existing) {
     try {
       if (isEdit) {
         await db.collection('shopkeepers').doc(existing.id).update(data);
-        toast('Shopkeeper updated');
+        toast(tr('shopkeeperUpdated'));
       } else {
         await db.collection('shopkeepers').add({ ...data, totalDue: 0 });
-        toast('Shopkeeper added');
+        toast(tr('shopkeeperAdded'));
       }
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
   if (isEdit) {
     document.getElementById('k-delete').addEventListener('click', async () => {
-      if (k.totalDue > 0 && !confirm(`${k.name} still has ${money(k.totalDue)} due. Delete anyway?`)) return;
-      if (k.totalDue <= 0 && !confirm(`Delete shopkeeper "${k.name}"?`)) return;
+      if (k.totalDue > 0 && !confirm(`${k.name} ${tr('confirmStillHasDue')} ${money(k.totalDue)} ${tr('confirmDueDeleteAnyway')}`)) return;
+      if (k.totalDue <= 0 && !confirm(`${tr('confirmDeleteShopkeeperPrefix')} "${k.name}"?`)) return;
       await db.collection('shopkeepers').doc(existing.id).delete();
-      toast('Shopkeeper deleted');
+      toast(tr('shopkeeperDeleted'));
       closeModal();
     });
   }
@@ -1031,13 +1483,13 @@ window.editShopkeeper = (id) => {
 window.openShopkeeperPaymentModal = (shopkeeperId) => {
   const k = state.shopkeepers.find((x) => x.id === shopkeeperId);
   showModal(`
-    <h3>Record payment — ${k.name}</h3>
+    <h3>${tr('recordPaymentPrefix')} — ${k.name}</h3>
     <form id="shopkeeper-payment-form">
-      <p style="color:var(--muted); font-size:14px; margin:0;">Current due: <strong class="mono">${money(k.totalDue)}</strong></p>
-      <label>Amount received<input required type="number" max="${k.totalDue}" id="kpay-amount" /></label>
+      <p style="color:var(--muted); font-size:14px; margin:0;">${tr('currentDueLabel')} <strong class="mono">${money(k.totalDue)}</strong></p>
+      <label>${tr('amountReceivedLabel')}<input required type="number" max="${k.totalDue}" id="kpay-amount" /></label>
       <div class="modal-actions">
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save payment</button>
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${tr('savePaymentBtn')}</button>
       </div>
     </form>
   `);
@@ -1046,39 +1498,39 @@ window.openShopkeeperPaymentModal = (shopkeeperId) => {
     const reEnable = guardDoubleSubmit(e.target);
     if (!reEnable) return;
     const amt = Number(document.getElementById('kpay-amount').value);
-    if (amt <= 0 || amt > k.totalDue) { toast('Enter a valid amount'); reEnable(); return; }
+    if (amt <= 0 || amt > k.totalDue) { toast(tr('enterValidAmount')); reEnable(); return; }
     try {
       await db.collection('shopkeepers').doc(k.id).update({ totalDue: k.totalDue - amt });
-      toast('Payment recorded');
+      toast(tr('paymentRecorded'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 };
 
 function openShopkeeperSaleModal() {
-  if (!state.products.length) { toast('Add a product first'); return; }
-  if (!state.shopkeepers.length) { toast('Add a shopkeeper first'); return; }
+  if (!state.products.length) { toast(tr('addProductFirst')); return; }
+  if (!state.shopkeepers.length) { toast(tr('addShopkeeperFirst')); return; }
   const rowId = uid();
   showModal(`
-    <h3>Record sale to shopkeeper</h3>
+    <h3>${tr('recordSaleToShopkeeperTitle')}</h3>
     <form id="shopkeeper-sale-form">
-      <label>Shopkeeper
+      <label>${tr('shopkeeperLabel')}
         <select id="ks-shopkeeper" required>
-          <option value="">Select shopkeeper…</option>
+          <option value="">${tr('selectShopkeeper')}</option>
           ${state.shopkeepers.map((k) => `<option value="${k.id}">${k.name}</option>`).join('')}
         </select>
       </label>
       <div class="line-items" id="ks-line-items">
         ${shopkeeperSaleLineRow(rowId)}
       </div>
-      <button type="button" class="btn secondary small" id="ks-add-line-btn" style="align-self:flex-start;">+ Add another item</button>
-      <label>Amount paid now<input type="number" id="ks-paid" value="0" required /></label>
+      <button type="button" class="btn secondary small" id="ks-add-line-btn" style="align-self:flex-start;">${tr('addAnotherItem')}</button>
+      <label>${tr('amountPaidNowLabel')}<input type="number" id="ks-paid" value="0" required /></label>
       <div class="modal-actions">
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save sale</button>
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${tr('saveSaleBtn')}</button>
       </div>
     </form>
   `);
@@ -1099,11 +1551,11 @@ function openShopkeeperSaleModal() {
       return p ? { productId, name: p.name, qty, price: p.salePrice, lineTotal: p.salePrice * qty } : null;
     }).filter((i) => i && i.productId && i.qty > 0);
 
-    if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
+    if (!items.length) { toast(tr('addAtLeastOneItem')); reEnable(); return; }
 
     for (const item of items) {
       const p = state.products.find((x) => x.id === item.productId);
-      if (item.qty > p.stock) { toast(`Not enough stock for ${p.name}`); reEnable(); return; }
+      if (item.qty > p.stock) { toast(`${tr('notEnoughStockFor')} ${p.name}`); reEnable(); return; }
     }
 
     const total = items.reduce((a, i) => a + i.lineTotal, 0);
@@ -1111,7 +1563,7 @@ function openShopkeeperSaleModal() {
     const due = Math.max(total - paid, 0);
     const shopkeeperId = document.getElementById('ks-shopkeeper').value;
     const shopkeeper = state.shopkeepers.find((k) => k.id === shopkeeperId);
-    if (!shopkeeper) { toast('Select a shopkeeper'); reEnable(); return; }
+    if (!shopkeeper) { toast(tr('selectShopkeeperToast')); reEnable(); return; }
     const invoiceNo = await getNextInvoiceNo();
 
     const batch = db.batch();
@@ -1133,11 +1585,11 @@ function openShopkeeperSaleModal() {
     }
     try {
       await batch.commit();
-      toast('Sale recorded');
+      toast(tr('saleRecorded'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 }
@@ -1146,11 +1598,11 @@ function shopkeeperSaleLineRow(rowId) {
   return `
     <div class="line-item-row" data-row="${rowId}">
       <select class="li-product">
-        <option value="">Select product…</option>
-        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)} left)</option>`).join('')}
+        <option value="">${tr('selectProduct')}</option>
+        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)})</option>`).join('')}
       </select>
       <input class="li-qty" type="number" min="1" value="1" placeholder="Qty" />
-      <span class="mono" style="font-size:12px;color:var(--muted);">unit price auto</span>
+      <span class="mono" style="font-size:12px;color:var(--muted);">${tr('unitPriceAuto')}</span>
       <button type="button" class="btn secondary small" onclick="this.closest('.line-item-row').remove()">✕</button>
     </div>
   `;
@@ -1160,14 +1612,14 @@ window.editShopkeeperSale = (id) => {
   const s = state.shopkeeperSales.find((x) => x.id === id);
   if (!s) return;
   showModal(`
-    <h3>Edit sale ${s.invoiceNo ? formatInvoice(s.invoiceNo) : ''} — ${s.shopkeeperName}</h3>
-    <p style="color:var(--muted); font-size:14px; margin:0;">Items: ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>Total: <strong class="mono">${money(s.total)}</strong></p>
+    <h3>${tr('editSaleTitlePrefix')} ${s.invoiceNo ? formatInvoice(s.invoiceNo) : ''} — ${s.shopkeeperName}</h3>
+    <p style="color:var(--muted); font-size:14px; margin:0;">${tr('itemsLabel')} ${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}<br/>${tr('totalLabelColon')} <strong class="mono">${money(s.total)}</strong></p>
     <form id="edit-shopkeeper-sale-form">
-      <label>Amount paid<input required type="number" id="eks-paid" value="${s.paid}" /></label>
+      <label>${tr('amountPaidNowLabel')}<input required type="number" id="eks-paid" value="${s.paid}" /></label>
       <div class="modal-actions">
-        <button type="button" class="btn danger" id="eks-delete">Delete sale</button>
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">Save changes</button>
+        <button type="button" class="btn danger" id="eks-delete">${tr('deleteSaleBtn')}</button>
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${tr('saveChanges')}</button>
       </div>
     </form>
   `);
@@ -1187,16 +1639,16 @@ window.editShopkeeperSale = (id) => {
     }
     try {
       await batch.commit();
-      toast('Sale updated');
+      toast(tr('saleUpdated'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 
   document.getElementById('eks-delete').addEventListener('click', async () => {
-    if (!confirm('Delete this sale? Stock and dues will be reversed.')) return;
+    if (!confirm(tr('confirmDeleteShopkeeperSaleBody'))) return;
     const batch = db.batch();
     batch.delete(db.collection('shopkeeperSales').doc(s.id));
     s.items.forEach((i) => {
@@ -1208,7 +1660,7 @@ window.editShopkeeperSale = (id) => {
       if (shopkeeper) batch.update(db.collection('shopkeepers').doc(shopkeeper.id), { totalDue: Math.max((shopkeeper.totalDue || 0) - s.due, 0) });
     }
     await batch.commit();
-    toast('Sale deleted');
+    toast(tr('saleDeleted'));
     closeModal();
   });
 };
@@ -1219,23 +1671,23 @@ window.shareShopkeeperSaleWhatsApp = async (id) => {
   const dateStr = new Date(s.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   const lines = [
     `*H.M Traders*`,
-    s.invoiceNo ? `Invoice: ${formatInvoice(s.invoiceNo)}` : '',
-    `Date: ${dateStr}`,
-    `Shopkeeper: ${s.shopkeeperName}`,
+    s.invoiceNo ? `${tr('waInvoiceLabel')} ${formatInvoice(s.invoiceNo)}` : '',
+    `${tr('waDateLabel')} ${dateStr}`,
+    `${tr('waShopkeeperLabel')} ${s.shopkeeperName}`,
     '',
     ...s.items.map((i) => `${i.name} ×${i.qty} — ${money(i.lineTotal)}`),
     '',
-    `Total: ${money(s.total)}`,
-    `Paid: ${money(s.paid)}`,
-    s.due > 0 ? `Due: ${money(s.due)}` : `Status: Settled`,
+    `${tr('waTotalLabel')} ${money(s.total)}`,
+    `${tr('waPaidLabel')} ${money(s.paid)}`,
+    s.due > 0 ? `${tr('waDueLabel')} ${money(s.due)}` : tr('waStatusSettled'),
     '',
-    'Thank you for your business!',
+    tr('waThanks'),
   ].filter(Boolean);
   const text = lines.join('\n');
 
   if (navigator.share && !isDesktopDevice()) {
     try {
-      await navigator.share({ title: 'H.M Traders Invoice', text });
+      await navigator.share({ title: tr('waShareTitle'), text });
       return;
     } catch (err) {
       if (err && err.name === 'AbortError') return;
@@ -1256,30 +1708,30 @@ function renderSuppliers() {
   const purchases = state.purchases.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
   el.innerHTML = `
     <div class="panel">
-      <div class="panel-head"><h3>Suppliers</h3><button class="btn small" id="add-supplier-btn">+ Add supplier</button></div>
+      <div class="panel-head"><h3>${tr('suppliersHeading')}</h3><button class="btn small" id="add-supplier-btn">${tr('addSupplierBtn')}</button></div>
       ${state.suppliers.length ? `
-        <table><thead><tr><th>Name</th><th>Phone</th><th></th></tr></thead>
+        <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th></th></tr></thead>
         <tbody>${state.suppliers.map((s) => `
           <tr>
-            <td data-label="Name">${s.name}</td>
-            <td data-label="Phone">${s.phone || '—'}</td>
-            <td data-label=""><button class="btn secondary small" onclick="editSupplier('${s.id}')">Edit</button> <button class="btn danger small" onclick="deleteSupplier('${s.id}')">Delete</button></td>
+            <td data-label="${tr('colName')}">${s.name}</td>
+            <td data-label="${tr('colPhone')}">${s.phone || '—'}</td>
+            <td data-label=""><button class="btn secondary small" onclick="editSupplier('${s.id}')">${tr('edit')}</button> <button class="btn danger small" onclick="deleteSupplier('${s.id}')">${tr('delete')}</button></td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No suppliers yet.</div>`}
+      ` : `<div class="empty-state">${tr('noSuppliersYet')}</div>`}
     </div>
     <div class="panel">
-      <div class="panel-head"><h3>Purchases</h3><button class="btn small" id="add-purchase-btn">+ Record purchase</button></div>
+      <div class="panel-head"><h3>${tr('purchasesHeading')}</h3><button class="btn small" id="add-purchase-btn">${tr('recordPurchaseBtn')}</button></div>
       ${purchases.length ? `
-        <table><thead><tr><th>Date</th><th>Supplier</th><th>Items</th><th>Total</th><th></th></tr></thead>
+        <table><thead><tr><th>${tr('colDate')}</th><th>${tr('colSupplierCol')}</th><th>${tr('colItems')}</th><th>${tr('colTotal')}</th><th></th></tr></thead>
         <tbody>${purchases.map((p) => `
           <tr>
-            <td data-label="Date">${new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
-            <td data-label="Supplier">${p.supplierName}</td>
-            <td data-label="Items">${p.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
-            <td data-label="Total" class="mono">${money(p.total)}</td>
-            <td data-label=""><button class="btn secondary small" onclick="editPurchase('${p.id}')">Edit</button> <button class="btn danger small" onclick="deletePurchase('${p.id}')">Delete</button></td>
+            <td data-label="${tr('colDate')}">${new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+            <td data-label="${tr('colSupplierCol')}">${p.supplierName}</td>
+            <td data-label="${tr('colItems')}">${p.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+            <td data-label="${tr('colTotal')}" class="mono">${money(p.total)}</td>
+            <td data-label=""><button class="btn secondary small" onclick="editPurchase('${p.id}')">${tr('edit')}</button> <button class="btn danger small" onclick="deletePurchase('${p.id}')">${tr('delete')}</button></td>
           </tr>`).join('')}</tbody></table>
-      ` : `<div class="empty-state">No purchases recorded yet.</div>`}
+      ` : `<div class="empty-state">${tr('noPurchasesYet')}</div>`}
     </div>
   `;
 
@@ -1291,14 +1743,14 @@ function openSupplierModal(existing) {
   const isEdit = !!existing;
   const s = existing || { name: '', phone: '' };
   showModal(`
-    <h3>${isEdit ? 'Edit supplier' : 'Add supplier'}</h3>
+    <h3>${isEdit ? tr('editSupplierTitle') : tr('addSupplierTitle')}</h3>
     <form id="supplier-form">
-      <label>Name<input required id="sup-name" value="${s.name}" /></label>
-      <label>Phone<input id="sup-phone" value="${s.phone || ''}" /></label>
+      <label>${tr('nameLabel')}<input required id="sup-name" value="${s.name}" /></label>
+      <label>${tr('phoneLabel')}<input id="sup-phone" value="${s.phone || ''}" /></label>
       <div class="modal-actions">
-        ${isEdit ? `<button type="button" class="btn danger" id="sup-delete">Delete</button>` : ''}
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Add supplier'}</button>
+        ${isEdit ? `<button type="button" class="btn danger" id="sup-delete">${tr('delete')}</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${isEdit ? tr('saveChanges') : tr('addSupplierBtn').replace('+ ', '')}</button>
       </div>
     </form>
   `);
@@ -1313,22 +1765,22 @@ function openSupplierModal(existing) {
     try {
       if (isEdit) {
         await db.collection('suppliers').doc(existing.id).update(data);
-        toast('Supplier updated');
+        toast(tr('supplierUpdated'));
       } else {
         await db.collection('suppliers').add(data);
-        toast('Supplier added');
+        toast(tr('supplierAdded'));
       }
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
   if (isEdit) {
     document.getElementById('sup-delete').addEventListener('click', async () => {
-      if (!confirm(`Delete supplier "${s.name}"? Past purchases will keep showing their recorded name.`)) return;
+      if (!confirm(`${tr('confirmDeleteSupplierPrefix')} "${s.name}"${tr('confirmDeleteSupplierSuffix')}`)) return;
       await db.collection('suppliers').doc(existing.id).delete();
-      toast('Supplier deleted');
+      toast(tr('supplierDeleted'));
       closeModal();
     });
   }
@@ -1342,15 +1794,15 @@ window.editSupplier = (id) => {
 window.deleteSupplier = async (id) => {
   const s = state.suppliers.find((x) => x.id === id);
   if (!s) return;
-  if (!confirm(`Delete supplier "${s.name}"? Past purchases will keep showing their recorded name.`)) return;
+  if (!confirm(`${tr('confirmDeleteSupplierPrefix')} "${s.name}"${tr('confirmDeleteSupplierSuffix')}`)) return;
   await db.collection('suppliers').doc(id).delete();
-  toast('Supplier deleted');
+  toast(tr('supplierDeleted'));
 };
 
 window.deletePurchase = async (id) => {
   const p = state.purchases.find((x) => x.id === id);
   if (!p) return;
-  if (!confirm(`Delete this purchase from ${p.supplierName}? Stock added by it will be reversed.`)) return;
+  if (!confirm(`${tr('confirmDeletePurchasePrefix')} ${p.supplierName}${tr('confirmDeletePurchaseSuffix')}`)) return;
   const batch = db.batch();
   batch.delete(db.collection('purchases').doc(p.id));
   p.items.forEach((i) => {
@@ -1358,7 +1810,7 @@ window.deletePurchase = async (id) => {
     if (prod) batch.update(db.collection('products').doc(i.productId), { stock: Math.max(prod.stock - i.qty, 0) });
   });
   await batch.commit();
-  toast('Purchase deleted');
+  toast(tr('purchaseDeleted'));
 };
 
 window.editPurchase = (id) => {
@@ -1368,25 +1820,25 @@ window.editPurchase = (id) => {
 
 function openPurchaseModal(existing) {
   const isEdit = !!existing;
-  if (!state.suppliers.length) { toast('Add a supplier first'); return; }
-  if (!state.products.length) { toast('Add a product first'); return; }
+  if (!state.suppliers.length) { toast(tr('addSupplierFirst')); return; }
+  if (!state.products.length) { toast(tr('addProductFirst')); return; }
   showModal(`
-    <h3>${isEdit ? 'Edit purchase' : 'Record purchase'}</h3>
+    <h3>${isEdit ? tr('editPurchaseTitle') : tr('recordPurchaseTitle')}</h3>
     <form id="purchase-form">
-      <label>Supplier
+      <label>${tr('supplierLabel')}
         <select id="pu-supplier" required>
-          <option value="">Select supplier…</option>
+          <option value="">${tr('selectSupplier')}</option>
           ${state.suppliers.map((s) => `<option value="${s.id}" ${isEdit && existing.supplierId === s.id ? 'selected' : ''}>${s.name}</option>`).join('')}
         </select>
       </label>
       <div class="line-items" id="purchase-line-items">
         ${isEdit ? existing.items.map((i) => purchaseLineRow(i)).join('') : purchaseLineRow()}
       </div>
-      <button type="button" class="btn secondary small" id="add-pline-btn" style="align-self:flex-start;">+ Add another item</button>
+      <button type="button" class="btn secondary small" id="add-pline-btn" style="align-self:flex-start;">${tr('addAnotherItem')}</button>
       <div class="modal-actions">
-        ${isEdit ? `<button type="button" class="btn danger" id="pu-delete">Delete</button>` : ''}
-        <button type="button" class="btn secondary" id="modal-cancel">Cancel</button>
-        <button type="submit" class="btn">${isEdit ? 'Save changes' : 'Save purchase'}</button>
+        ${isEdit ? `<button type="button" class="btn danger" id="pu-delete">${tr('delete')}</button>` : ''}
+        <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+        <button type="submit" class="btn">${isEdit ? tr('saveChanges') : tr('savePurchaseBtn')}</button>
       </div>
     </form>
   `);
@@ -1418,7 +1870,7 @@ function openPurchaseModal(existing) {
       return { productId, name: p.name, qty, costEach, lineTotal: qty * costEach };
     }).filter((i) => i && i.productId && i.qty > 0);
 
-    if (!items.length) { toast('Add at least one valid item'); reEnable(); return; }
+    if (!items.length) { toast(tr('addAtLeastOneItem')); reEnable(); return; }
 
     const supplierId = document.getElementById('pu-supplier').value;
     const supplier = state.suppliers.find((s) => s.id === supplierId);
@@ -1457,11 +1909,11 @@ function openPurchaseModal(existing) {
         });
       }
       await batch.commit();
-      toast(isEdit ? 'Purchase updated' : 'Purchase recorded, stock updated');
+      toast(isEdit ? tr('purchaseUpdated') : tr('purchaseRecordedStockUpdated'));
       closeModal();
     } catch (err) {
       reEnable();
-      toast('Save failed — try again');
+      toast(tr('saveFailed'));
     }
   });
 }
@@ -1473,7 +1925,7 @@ function purchaseLineRow(existingItem) {
   return `
     <div class="line-item-row" style="grid-template-columns:1.6fr 0.7fr 0.7fr 0.8fr auto;">
       <select class="li-product">
-        <option value="">Select product…</option>
+        <option value="">${tr('selectProduct')}</option>
         ${state.products.map((pr) => `<option value="${pr.id}" ${pr.id === selectedProductId ? 'selected' : ''}>${pr.name}${pr.unitsPerCrate ? ` (${pr.unitsPerCrate}/crate)` : ''}</option>`).join('')}
       </select>
       <input class="li-crates" type="number" min="0" value="${split.crates ?? 0}" placeholder="Crates" title="Crates" />
