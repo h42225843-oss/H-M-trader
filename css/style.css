@@ -39,7 +39,8 @@
 [data-theme="dark"] thead th{background:#1F2729;}
 [data-theme="dark"] tbody tr:hover{background:#212a2c;}
 [data-theme="dark"] .splash{background: radial-gradient(1200px 600px at 20% -10%, #17362c 0%, transparent 60%), linear-gradient(180deg,var(--green-deep),#081512);}
-[data-theme="dark"] .stat-card .value{color:var(--ink);}
+[data-theme="dark"] .stat-card .value{color:var(--ink) !important;}
+[data-theme="dark"] .stat-card .label{color:var(--muted) !important;}
 
 *{box-sizing:border-box;}
 html,body{margin:0;padding:0;}
