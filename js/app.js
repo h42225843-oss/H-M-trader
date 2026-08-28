@@ -40,6 +40,12 @@ function splitCratesPcs(pcs, perCrate) {
   return { crates: Math.floor(pcs / size), pcs: pcs % size };
 }
 
+// True on a real desktop/laptop (mouse-driven, no touch) — false on phones/tablets.
+// Used to skip the OS share menu on PC and jump straight to WhatsApp instead.
+function isDesktopDevice() {
+  return window.matchMedia('(pointer: fine)').matches && !window.matchMedia('(pointer: coarse)').matches;
+}
+
 // Formats an invoice sequence number like "INV-0007"
 function formatInvoice(n) {
   return `INV-${String(n).padStart(4, '0')}`;
@@ -795,8 +801,9 @@ window.shareSaleWhatsApp = async (id) => {
   const text = lines.join('\n');
 
   // Prefer the phone's native "Share to…" sheet (WhatsApp, SMS, Email, etc.),
-  // same as sharing a photo from the Gallery.
-  if (navigator.share) {
+  // same as sharing a photo from the Gallery — but skip it on a real desktop/PC,
+  // where WhatsApp usually isn't a registered share target, and go straight there instead.
+  if (navigator.share && !isDesktopDevice()) {
     try {
       await navigator.share({ title: 'H.M Traders Invoice', text });
       return;
@@ -1226,7 +1233,7 @@ window.shareShopkeeperSaleWhatsApp = async (id) => {
   ].filter(Boolean);
   const text = lines.join('\n');
 
-  if (navigator.share) {
+  if (navigator.share && !isDesktopDevice()) {
     try {
       await navigator.share({ title: 'H.M Traders Invoice', text });
       return;
