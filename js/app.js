@@ -1217,7 +1217,8 @@ function openSaleModal() {
       <label>${tr('customerLabel')}
         <select id="s-customer">
           <option value="">${tr('walkIn')}</option>
-          ${state.customers.map((c) => `<option value="${c.id}">${c.name}</option>`).join('')}
+          ${state.customers.length ? `<optgroup label="${tr('customerLabel')}">${state.customers.map((c) => `<option value="customer:${c.id}">${c.name}</option>`).join('')}</optgroup>` : ''}
+          ${state.shopkeepers.length ? `<optgroup label="${tr('shopkeeperLabel')}">${state.shopkeepers.map((k) => `<option value="shopkeeper:${k.id}">${k.name}</option>`).join('')}</optgroup>` : ''}
         </select>
       </label>
       <div class="line-items" id="line-items">
@@ -1240,13 +1241,23 @@ function openSaleModal() {
     e.preventDefault();
     const reEnable = guardDoubleSubmit(e.target);
     if (!reEnable) return;
+
+    // Figure out who's buying — a walk-in, a retail customer, or a shopkeeper —
+    // so the sale gets filed (and priced) correctly no matter which is picked here.
+    const buyerValue = document.getElementById('s-customer').value;
+    const [buyerType, buyerId] = buyerValue.includes(':') ? buyerValue.split(':') : ['walkin', ''];
+    const customer = buyerType === 'customer' ? state.customers.find((c) => c.id === buyerId) : null;
+    const shopkeeper = buyerType === 'shopkeeper' ? state.shopkeepers.find((k) => k.id === buyerId) : null;
+
     const rows = [...document.querySelectorAll('.line-item-row')];
     const items = rows.map((r) => {
       const productId = r.querySelector('.li-product').value;
       const qty = Number(r.querySelector('.li-qty').value);
       const p = state.products.find((x) => x.id === productId);
-      return { productId, name: p.name, qty, price: p.salePrice, lineTotal: p.salePrice * qty };
-    }).filter((i) => i.productId && i.qty > 0);
+      if (!p) return null;
+      const unitPrice = shopkeeper ? (p.wholesalePrice || p.salePrice) : p.salePrice;
+      return { productId, name: p.name, qty, price: unitPrice, lineTotal: unitPrice * qty };
+    }).filter((i) => i && i.productId && i.qty > 0);
 
     if (!items.length) { toast(tr('addAtLeastOneItem')); reEnable(); return; }
 
@@ -1259,27 +1270,38 @@ function openSaleModal() {
     const total = items.reduce((a, i) => a + i.lineTotal, 0);
     const paid = Number(document.getElementById('s-paid').value) || 0;
     const due = Math.max(total - paid, 0);
-    const customerId = document.getElementById('s-customer').value;
-    const customer = state.customers.find((c) => c.id === customerId);
     const invoiceNo = await getNextInvoiceNo();
 
     const batch = db.batch();
-    const saleRef = db.collection('sales').doc();
-    batch.set(saleRef, {
-      invoiceNo,
-      customerId: customerId || null,
-      customerName: customer ? customer.name : 'Walk-in',
-      items,
-      total, paid, due,
-      date: new Date().toISOString(),
-    });
+    if (shopkeeper) {
+      const saleRef = db.collection('shopkeeperSales').doc();
+      batch.set(saleRef, {
+        invoiceNo,
+        shopkeeperId: shopkeeper.id,
+        shopkeeperName: shopkeeper.name,
+        items, total, paid, due,
+        date: new Date().toISOString(),
+      });
+      if (due > 0) {
+        batch.update(db.collection('shopkeepers').doc(shopkeeper.id), { totalDue: (shopkeeper.totalDue || 0) + due });
+      }
+    } else {
+      const saleRef = db.collection('sales').doc();
+      batch.set(saleRef, {
+        invoiceNo,
+        customerId: customer ? customer.id : null,
+        customerName: customer ? customer.name : 'Walk-in',
+        items, total, paid, due,
+        date: new Date().toISOString(),
+      });
+      if (customer && due > 0) {
+        batch.update(db.collection('customers').doc(customer.id), { totalDue: (customer.totalDue || 0) + due });
+      }
+    }
     items.forEach((i) => {
       const p = state.products.find((x) => x.id === i.productId);
       batch.update(db.collection('products').doc(i.productId), { stock: p.stock - i.qty });
     });
-    if (customer && due > 0) {
-      batch.update(db.collection('customers').doc(customer.id), { totalDue: (customer.totalDue || 0) + due });
-    }
     try {
       await batch.commit();
       toast(tr('saleRecorded'));
