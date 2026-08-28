@@ -501,14 +501,23 @@ function isDesktopDevice() {
 // no leading zero, digits only) — works even if the number isn't a saved
 // contact. Assumes Pakistan (+92) since that's this shop's country.
 function normalizePhoneForWhatsApp(phone) {
-  let digits = (phone || '').replace(/[^0-9]/g, '');
-  if (!digits) return '';
-  if (digits.startsWith('0')) {
-    digits = '92' + digits.slice(1); // local "03XX-XXXXXXX" → "923XXXXXXXXX"
-  } else if (!digits.startsWith('92') && digits.length === 10) {
-    digits = '92' + digits; // e.g. "3XXXXXXXXX" typed without the leading 0
+  try {
+    let digits = (phone || '').replace(/[^0-9]/g, '');
+    if (!digits) return '';
+    if (digits.startsWith('0')) {
+      digits = '92' + digits.slice(1); // local "03XX-XXXXXXX" → "923XXXXXXXXX"
+    } else if (!digits.startsWith('92') && digits.length === 10) {
+      digits = '92' + digits; // e.g. "3XXXXXXXXX" typed without the leading 0
+    }
+    // Validate: a real Pakistani mobile number in this format is exactly
+    // 12 digits (92 + a 10-digit number). Reject anything malformed —
+    // too short, too long, or not actually numeric — rather than risk
+    // building a broken WhatsApp link that fails silently.
+    if (!/^92\d{10}$/.test(digits)) return '';
+    return digits;
+  } catch (err) {
+    return ''; // never let a weird phone value break the Share button
   }
-  return digits;
 }
 
 // Formats an invoice sequence number like "INV-0007"
@@ -1284,16 +1293,20 @@ window.shareSaleWhatsApp = async (id) => {
   // failed for another reason): if this customer has a saved phone number, jump straight
   // into WhatsApp Web's chat with them (skipping the wa.me landing page entirely).
   // Otherwise open WhatsApp's generic composer so the person can pick who to send it to.
-  const message = encodeURIComponent(text);
-  const customerForShare = s.customerId ? state.customers.find((c) => c.id === s.customerId) : null;
-  const customerPhone = customerForShare && customerForShare.phone ? normalizePhoneForWhatsApp(customerForShare.phone) : '';
-  const shareUrl = customerPhone
-    ? `https://web.whatsapp.com/send?phone=${customerPhone}&text=${message}`
-    : `https://api.whatsapp.com/send?text=${message}`;
-  // Reusing the same named window means repeat shares land in the same WhatsApp Web tab
-  // instead of piling up new tabs (which is what triggers WhatsApp's "already open
-  // elsewhere" conflict prompt).
-  window.open(shareUrl, 'hmTradersWhatsApp');
+  try {
+    const message = encodeURIComponent(text);
+    const customerForShare = s.customerId ? state.customers.find((c) => c.id === s.customerId) : null;
+    const customerPhone = customerForShare && customerForShare.phone ? normalizePhoneForWhatsApp(customerForShare.phone) : '';
+    const shareUrl = customerPhone
+      ? `https://web.whatsapp.com/send?phone=${customerPhone}&text=${message}`
+      : `https://api.whatsapp.com/send?text=${message}`;
+    // Reusing the same named window means repeat shares land in the same WhatsApp Web tab
+    // instead of piling up new tabs (which is what triggers WhatsApp's "already open
+    // elsewhere" conflict prompt).
+    window.open(shareUrl, 'hmTradersWhatsApp');
+  } catch (err) {
+    toast('Could not open WhatsApp — try again');
+  }
 };
 
 /* ============================================================
@@ -1718,13 +1731,17 @@ window.shareShopkeeperSaleWhatsApp = async (id) => {
   }
   // Same as the retail share: jump straight into the shopkeeper's WhatsApp chat when we
   // have their number, skipping the wa.me landing page, and reuse the same tab each time.
-  const message = encodeURIComponent(text);
-  const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
-  const phone = shopkeeper && shopkeeper.phone ? normalizePhoneForWhatsApp(shopkeeper.phone) : '';
-  const shareUrl = phone
-    ? `https://web.whatsapp.com/send?phone=${phone}&text=${message}`
-    : `https://api.whatsapp.com/send?text=${message}`;
-  window.open(shareUrl, 'hmTradersWhatsApp');
+  try {
+    const message = encodeURIComponent(text);
+    const shopkeeper = state.shopkeepers.find((k) => k.id === s.shopkeeperId);
+    const phone = shopkeeper && shopkeeper.phone ? normalizePhoneForWhatsApp(shopkeeper.phone) : '';
+    const shareUrl = phone
+      ? `https://web.whatsapp.com/send?phone=${phone}&text=${message}`
+      : `https://api.whatsapp.com/send?text=${message}`;
+    window.open(shareUrl, 'hmTradersWhatsApp');
+  } catch (err) {
+    toast('Could not open WhatsApp — try again');
+  }
 };
 
 /* ============================================================
