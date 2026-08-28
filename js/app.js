@@ -684,8 +684,8 @@ function renderLowStock() {
         <table><thead><tr><th>${tr('colProduct')}</th><th>${tr('colCategory')}</th><th>${tr('colStockLeft')}</th><th>${tr('colReorderAt')}</th><th></th></tr></thead>
         <tbody>${lowStock.map((p) => `
           <tr>
-            <td data-label="${tr('colProduct')}">${p.name}</td>
-            <td data-label="${tr('colCategory')}">${p.category || '—'}</td>
+            <td data-label="${tr('colProduct')}" class="ltr-field">${p.name}</td>
+            <td data-label="${tr('colCategory')}" class="ltr-field">${p.category || '—'}</td>
             <td data-label="${tr('colStock')}" class="mono">${crateBreakdown(p.stock, p.unitsPerCrate)}</td>
             <td data-label="${tr('colReorderAt')}" class="mono">${p.lowStockAt ?? 5} ${tr('pcs')}</td>
             <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">${tr('edit')}</button></td>
@@ -761,7 +761,7 @@ function renderReports() {
         <table><thead><tr><th>${tr('colProduct')}</th><th>${tr('colQtySold')}</th><th>${tr('colRevenue')}</th></tr></thead>
         <tbody>${topProducts.map(([name, d]) => `
           <tr>
-            <td data-label="${tr('colProduct')}">${name}</td>
+            <td data-label="${tr('colProduct')}" class="ltr-field">${name}</td>
             <td data-label="${tr('colQtySold')}" class="mono">${d.qty}</td>
             <td data-label="${tr('colRevenue')}" class="mono">${money(d.revenue)}</td>
           </tr>`).join('')}</tbody></table>
@@ -866,7 +866,7 @@ function renderDashboard() {
       <div class="stat-card"><div class="label">${tr('statCustomers')}</div><div class="value" data-countup="${state.customers.length}" data-format="int">0</div></div>
       <div class="stat-card"><div class="label">${tr('statSuppliers')}</div><div class="value" data-countup="${state.suppliers.length}" data-format="int">0</div></div>
       <div class="stat-card"><div class="label">${tr('statAvgSale')}</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statTopProduct')}</div><div class="value" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
+      <div class="stat-card"><div class="label">${tr('statTopProduct')}</div><div class="value ltr-field" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
     </div>
   `;
   animateCountUps(el);
@@ -913,7 +913,7 @@ function renderInventory() {
 
   el.innerHTML = `
     <div class="category-tabs">
-      ${tabs.map((cat) => `<button class="cat-tab ${cat === state.inventoryTab ? 'active' : ''}" data-cat="${cat}">${cat}</button>`).join('')}
+      ${tabs.map((cat) => `<button class="cat-tab ltr-field ${cat === state.inventoryTab ? 'active' : ''}" data-cat="${cat}">${cat}</button>`).join('')}
     </div>
     <div class="stat-grid" style="grid-template-columns:repeat(2,1fr); margin-bottom:18px;">
       <div class="stat-card"><div class="label">${state.inventoryTab} — ${tr('colCrates')}</div><div class="value">${catTotals.crates}</div></div>
@@ -927,8 +927,8 @@ function renderInventory() {
         const low = p.stock <= (p.lowStockAt ?? 5);
         return `
         <tr>
-          <td data-label="${tr('colName')}">${p.name}</td>
-          <td data-label="${tr('colCategory')}">${p.category || '—'}</td>
+          <td data-label="${tr('colName')}" class="ltr-field">${p.name}</td>
+          <td data-label="${tr('colCategory')}" class="ltr-field">${p.category || '—'}</td>
           <td data-label="${tr('colCrates')}" class="mono">${split.crates === null ? '—' : (low ? `<span class="pill warn">${split.crates}</span>` : split.crates)}</td>
           <td data-label="${tr('colPcs')}" class="mono">${low && split.crates === null ? `<span class="pill warn">${split.pcs}</span>` : split.pcs}</td>
           <td data-label="${tr('colCost')}" class="mono">${money(p.costPrice)}</td>
@@ -1055,9 +1055,9 @@ function renderSalesTable(sales) {
     <tbody>${sales.map((s) => `
       <tr>
         <td data-label="${tr('colInvoice')}" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
-        <td data-label="${tr('colDate')}">${formatDateTime(s.date)}</td>
-        <td data-label="${tr('colCustomer')}">${s.customerName || tr('walkIn')}</td>
-        <td data-label="${tr('colItems')}">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+        <td data-label="${tr('colDate')}" class="ltr-field">${formatDateTime(s.date)}</td>
+        <td data-label="${tr('colCustomer')}" class="ltr-field">${s.customerName || tr('walkIn')}</td>
+        <td data-label="${tr('colItems')}" class="ltr-field">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
         <td data-label="${tr('colTotal')}" class="mono">${money(s.total)}</td>
         <td data-label="${tr('colPaid')}" class="mono">${money(s.paid)}</td>
         <td data-label="${tr('colDue')}">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">${tr('settled')}</span>`}</td>
@@ -1285,7 +1285,7 @@ function renderCustomers() {
         <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
         <tbody>${state.customers.map((c) => `
           <tr>
-            <td data-label="${tr('colName')}">${c.name}</td>
+            <td data-label="${tr('colName')}" class="ltr-field">${c.name}</td>
             <td data-label="${tr('colPhone')}">${c.phone || '—'}</td>
             <td data-label="${tr('colDue')}">${c.totalDue > 0 ? `<span class="pill warn">${money(c.totalDue)}</span>` : `<span class="pill ok">${tr('clearStatus')}</span>`}</td>
             <td data-label="">
@@ -1395,7 +1395,7 @@ function renderShopkeepers() {
         <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
         <tbody>${state.shopkeepers.map((k) => `
           <tr>
-            <td data-label="${tr('colName')}">${k.name}</td>
+            <td data-label="${tr('colName')}" class="ltr-field">${k.name}</td>
             <td data-label="${tr('colPhone')}">${k.phone || '—'}</td>
             <td data-label="${tr('colDue')}">${k.totalDue > 0 ? `<span class="pill warn">${money(k.totalDue)}</span>` : `<span class="pill ok">${tr('clearStatus')}</span>`}</td>
             <td data-label="">
@@ -1412,9 +1412,9 @@ function renderShopkeepers() {
         <tbody>${sales.map((s) => `
           <tr>
             <td data-label="${tr('colInvoice')}" class="mono">${s.invoiceNo ? formatInvoice(s.invoiceNo) : '—'}</td>
-            <td data-label="${tr('colDate')}">${formatDateTime(s.date)}</td>
-            <td data-label="${tr('colShopkeeperCol')}">${s.shopkeeperName}</td>
-            <td data-label="${tr('colItems')}">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+            <td data-label="${tr('colDate')}" class="ltr-field">${formatDateTime(s.date)}</td>
+            <td data-label="${tr('colShopkeeperCol')}" class="ltr-field">${s.shopkeeperName}</td>
+            <td data-label="${tr('colItems')}" class="ltr-field">${s.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
             <td data-label="${tr('colTotal')}" class="mono">${money(s.total)}</td>
             <td data-label="${tr('colPaid')}" class="mono">${money(s.paid)}</td>
             <td data-label="${tr('colDue')}">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">${tr('settled')}</span>`}</td>
@@ -1713,7 +1713,7 @@ function renderSuppliers() {
         <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th></th></tr></thead>
         <tbody>${state.suppliers.map((s) => `
           <tr>
-            <td data-label="${tr('colName')}">${s.name}</td>
+            <td data-label="${tr('colName')}" class="ltr-field">${s.name}</td>
             <td data-label="${tr('colPhone')}">${s.phone || '—'}</td>
             <td data-label=""><button class="btn secondary small" onclick="editSupplier('${s.id}')">${tr('edit')}</button> <button class="btn danger small" onclick="deleteSupplier('${s.id}')">${tr('delete')}</button></td>
           </tr>`).join('')}</tbody></table>
@@ -1725,9 +1725,9 @@ function renderSuppliers() {
         <table><thead><tr><th>${tr('colDate')}</th><th>${tr('colSupplierCol')}</th><th>${tr('colItems')}</th><th>${tr('colTotal')}</th><th></th></tr></thead>
         <tbody>${purchases.map((p) => `
           <tr>
-            <td data-label="${tr('colDate')}">${new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
-            <td data-label="${tr('colSupplierCol')}">${p.supplierName}</td>
-            <td data-label="${tr('colItems')}">${p.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
+            <td data-label="${tr('colDate')}" class="ltr-field">${new Date(p.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</td>
+            <td data-label="${tr('colSupplierCol')}" class="ltr-field">${p.supplierName}</td>
+            <td data-label="${tr('colItems')}" class="ltr-field">${p.items.map((i) => `${i.name} ×${i.qty}`).join(', ')}</td>
             <td data-label="${tr('colTotal')}" class="mono">${money(p.total)}</td>
             <td data-label=""><button class="btn secondary small" onclick="editPurchase('${p.id}')">${tr('edit')}</button> <button class="btn danger small" onclick="deletePurchase('${p.id}')">${tr('delete')}</button></td>
           </tr>`).join('')}</tbody></table>
