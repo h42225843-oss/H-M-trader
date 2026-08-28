@@ -136,7 +136,22 @@ const translations = {
     piecesPerCrateHint: '— how many pcs make up 1 crate (leave blank if sold loose only)',
     lowStockAlertLabel: 'Low stock alert at (pcs)',
     costPriceLabel: 'Cost price (per pc)',
-    salePriceLabel: 'Sale price (per pc)',
+    salePriceLabel: 'Sale price (per pc) — Retail',
+    wholesalePriceLabel: 'Wholesale price (per pc)',
+    wholesalePriceHint: '— price used for shopkeeper sales (leave blank to use retail price)',
+    colWholesale: 'Wholesale',
+    printInvoiceBtn: 'Print',
+    invoiceDoc: 'INVOICE',
+    invoiceDescription: 'Description',
+    invoiceQty: 'Qty',
+    invoiceAmount: 'Amount',
+    invoiceSubtotal: 'Subtotal:',
+    invoiceBalanceDue: 'Balance Due:',
+    invoiceThanksTitle: 'Thank You for Choosing H.M Traders!',
+    invoiceThanksSub: 'We truly appreciate your business and look forward to serving you again.',
+    backupDataBtn: 'Backup Data',
+    backupDownloaded: 'Backup downloaded',
+    backupFailed: 'Backup failed — try again',
     nameLabel: 'Name',
     phoneLabel: 'Phone',
     customerLabel: 'Customer',
@@ -342,7 +357,22 @@ const translations = {
     piecesPerCrateHint: '— ایک کریٹ میں کتنے عدد ہیں (اگر صرف کھلا فروخت ہوتا ہے تو خالی چھوڑ دیں)',
     lowStockAlertLabel: 'کم اسٹاک الرٹ (عدد)',
     costPriceLabel: 'لاگت قیمت (فی عدد)',
-    salePriceLabel: 'فروخت قیمت (فی عدد)',
+    salePriceLabel: 'فروخت قیمت (فی عدد) — پرچون',
+    wholesalePriceLabel: 'ہول سیل قیمت (فی عدد)',
+    wholesalePriceHint: '— دکاندار کو فروخت کے لیے استعمال ہوگی (خالی چھوڑیں تو پرچون قیمت استعمال ہوگی)',
+    colWholesale: 'ہول سیل',
+    printInvoiceBtn: 'پرنٹ کریں',
+    invoiceDoc: 'انوائس',
+    invoiceDescription: 'تفصیل',
+    invoiceQty: 'مقدار',
+    invoiceAmount: 'رقم',
+    invoiceSubtotal: 'ذیلی کل:',
+    invoiceBalanceDue: 'باقی واجب الادا:',
+    invoiceThanksTitle: 'ایچ ایم ٹریڈرز کو منتخب کرنے کا شکریہ!',
+    invoiceThanksSub: 'ہم آپ کے کاروبار کی واقعی قدر کرتے ہیں اور دوبارہ خدمت کے منتظر ہیں۔',
+    backupDataBtn: 'ڈیٹا بیک اپ',
+    backupDownloaded: 'بیک اپ ڈاؤن لوڈ ہو گیا',
+    backupFailed: 'بیک اپ ناکام — دوبارہ کوشش کریں',
     nameLabel: 'نام',
     phoneLabel: 'فون',
     customerLabel: 'کسٹمر',
@@ -621,6 +651,35 @@ document.getElementById('login-form').addEventListener('submit', (e) => {
 });
 
 document.getElementById('logout-btn').addEventListener('click', () => auth.signOut());
+
+// Downloads everything currently loaded (products, sales, customers, suppliers,
+// purchases, shopkeepers, shopkeeper sales) as one JSON file, for safekeeping.
+document.getElementById('backup-btn').addEventListener('click', () => {
+  try {
+    const data = {
+      exportedAt: new Date().toISOString(),
+      products: state.products,
+      customers: state.customers,
+      suppliers: state.suppliers,
+      sales: state.sales,
+      purchases: state.purchases,
+      shopkeepers: state.shopkeepers,
+      shopkeeperSales: state.shopkeeperSales,
+    };
+    const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `hm-traders-backup-${new Date().toISOString().slice(0, 10)}.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    toast(tr('backupDownloaded'));
+  } catch (err) {
+    toast(tr('backupFailed'));
+  }
+});
 
 /* ---------------- Navigation ---------------- */
 document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').forEach((btn) => {
@@ -945,7 +1004,7 @@ function renderInventory() {
     </div>
     <div class="panel">
       <div class="panel-head"><h3>${tr('productsHeading')}</h3><button class="btn small" id="add-product-btn">${tr('addProductBtn')}</button></div>
-      <table><thead><tr><th>${tr('colName')}</th><th>${tr('colCategory')}</th><th>${tr('colCrates')}</th><th>${tr('colPcs')}</th><th>${tr('colCost')}</th><th>${tr('colSalePrice')}</th><th></th></tr></thead>
+      <table><thead><tr><th>${tr('colName')}</th><th>${tr('colCategory')}</th><th>${tr('colCrates')}</th><th>${tr('colPcs')}</th><th>${tr('colCost')}</th><th>${tr('colSalePrice')}</th><th>${tr('colWholesale')}</th><th></th></tr></thead>
       <tbody>${activeProducts.map((p) => {
         const split = splitCratesPcs(p.stock, p.unitsPerCrate);
         const low = p.stock <= (p.lowStockAt ?? 5);
@@ -957,6 +1016,7 @@ function renderInventory() {
           <td data-label="${tr('colPcs')}" class="mono">${low && split.crates === null ? `<span class="pill warn">${split.pcs}</span>` : split.pcs}</td>
           <td data-label="${tr('colCost')}" class="mono">${money(p.costPrice)}</td>
           <td data-label="${tr('colSalePrice')}" class="mono">${money(p.salePrice)}</td>
+          <td data-label="${tr('colWholesale')}" class="mono">${p.wholesalePrice ? money(p.wholesalePrice) : '—'}</td>
           <td data-label=""><button class="btn secondary small" onclick="editProduct('${p.id}')">${tr('edit')}</button></td>
         </tr>`;
       }).join('')}</tbody></table>
@@ -973,7 +1033,7 @@ function renderInventory() {
 
 function openProductModal(existing) {
   const isEdit = !!existing;
-  const p = existing || { name: '', category: '', stock: 0, unit: 'pcs', unitsPerCrate: '', costPrice: '', salePrice: '', lowStockAt: 5 };
+  const p = existing || { name: '', category: '', stock: 0, unit: 'pcs', unitsPerCrate: '', costPrice: '', salePrice: '', wholesalePrice: '', lowStockAt: 5 };
   const initialCrates = p.unitsPerCrate ? Math.floor(p.stock / p.unitsPerCrate) : 0;
   const initialPcs = p.unitsPerCrate ? p.stock % p.unitsPerCrate : p.stock;
 
@@ -992,6 +1052,7 @@ function openProductModal(existing) {
       <label>${tr('lowStockAlertLabel')}<input type="number" id="p-lowstock" value="${p.lowStockAt}" /></label>
       <label>${tr('costPriceLabel')}<input required type="number" id="p-cost" value="${p.costPrice}" /></label>
       <label>${tr('salePriceLabel')}<input required type="number" id="p-sale" value="${p.salePrice}" /></label>
+      <label>${tr('wholesalePriceLabel')} <span style="font-weight:400;">${tr('wholesalePriceHint')}</span><input type="number" id="p-wholesale" value="${p.wholesalePrice || ''}" /></label>
       <div class="modal-actions">
         ${isEdit ? `<button type="button" class="btn danger" id="p-delete">${tr('delete')}</button>` : ''}
         <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
@@ -1037,6 +1098,7 @@ function openProductModal(existing) {
       lowStockAt: Number(document.getElementById('p-lowstock').value) || 5,
       costPrice: Number(document.getElementById('p-cost').value),
       salePrice: Number(document.getElementById('p-sale').value),
+      wholesalePrice: Number(document.getElementById('p-wholesale').value) || null,
     };
     try {
       if (isEdit) {
@@ -1085,7 +1147,7 @@ function renderSalesTable(sales) {
         <td data-label="${tr('colTotal')}" class="mono">${money(s.total)}</td>
         <td data-label="${tr('colPaid')}" class="mono">${money(s.paid)}</td>
         <td data-label="${tr('colDue')}">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">${tr('settled')}</span>`}</td>
-        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">${tr('edit')}</button> <button class="btn secondary small" onclick="shareSaleWhatsApp('${s.id}')" title="Share on WhatsApp">${tr('share')}</button></td>
+        <td data-label=""><button class="btn secondary small" onclick="editSale('${s.id}')">${tr('edit')}</button> <button class="btn secondary small" onclick="openInvoiceModal('${s.id}','sale')">${tr('printInvoiceBtn')}</button> <button class="btn secondary small" onclick="shareSaleWhatsApp('${s.id}')" title="Share on WhatsApp">${tr('share')}</button></td>
       </tr>`).join('')}</tbody></table>
   `;
 }
@@ -1254,6 +1316,57 @@ window.editSale = (id) => {
     toast(tr('saleDeleted'));
     closeModal();
   });
+};
+
+// Builds the printable/preview invoice HTML for either a retail sale or a shopkeeper sale.
+function buildInvoiceHtml(sale, buyerLabel, buyerName) {
+  const dateStr = new Date(sale.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  return `
+    <div class="invoice-doc">
+      <div class="invoice-head">
+        <div>
+          <div class="invoice-shop">H.M TRADERS</div>
+          <div class="invoice-shop-sub">${tr('loginSub')}</div>
+        </div>
+        <div class="invoice-title">${tr('invoiceDoc')}</div>
+      </div>
+      <div class="invoice-meta">
+        <div><strong>${tr('colInvoice')}:</strong> <span class="ltr-field">${sale.invoiceNo ? formatInvoice(sale.invoiceNo) : '—'}</span></div>
+        <div><strong>${tr('colDate')}:</strong> <span class="ltr-field">${dateStr}</span></div>
+        <div><strong>${buyerLabel}:</strong> <span class="ltr-field">${buyerName}</span></div>
+      </div>
+      <table class="invoice-table">
+        <thead><tr><th>${tr('invoiceDescription')}</th><th>${tr('invoiceQty')}</th><th>${tr('invoiceAmount')}</th></tr></thead>
+        <tbody>
+          ${sale.items.map((i) => `<tr><td>${i.name}</td><td class="mono">${i.qty}</td><td class="mono">${money(i.lineTotal)}</td></tr>`).join('')}
+        </tbody>
+      </table>
+      <div class="invoice-totals">
+        <div><span>${tr('invoiceSubtotal')}</span><strong class="mono">${money(sale.total)}</strong></div>
+        <div><span>${tr('colPaid')}:</span><strong class="mono">${money(sale.paid)}</strong></div>
+        <div><span>${tr('invoiceBalanceDue')}</span><strong class="mono">${money(sale.due)}</strong></div>
+      </div>
+      <div class="invoice-thanks">
+        <div class="invoice-thanks-title">${tr('invoiceThanksTitle')}</div>
+        <div class="invoice-thanks-sub">${tr('invoiceThanksSub')}</div>
+      </div>
+    </div>
+  `;
+}
+
+window.openInvoiceModal = (id, type) => {
+  const sale = type === 'shopkeeper' ? state.shopkeeperSales.find((x) => x.id === id) : state.sales.find((x) => x.id === id);
+  if (!sale) return;
+  const buyerLabel = type === 'shopkeeper' ? tr('shopkeeperLabel') : tr('customerLabel');
+  const buyerName = type === 'shopkeeper' ? sale.shopkeeperName : (sale.customerName || tr('walkIn'));
+  showModal(`
+    <div id="invoice-print-area">${buildInvoiceHtml(sale, buyerLabel, buyerName)}</div>
+    <div class="modal-actions">
+      <button type="button" class="btn secondary" id="modal-cancel">${tr('cancel')}</button>
+      <button type="button" class="btn" id="invoice-print-btn">🖨 ${tr('printInvoiceBtn')}</button>
+    </div>
+  `);
+  document.getElementById('invoice-print-btn').addEventListener('click', () => window.print());
 };
 
 window.shareSaleWhatsApp = async (id) => {
@@ -1454,7 +1567,7 @@ function renderShopkeepers() {
             <td data-label="${tr('colTotal')}" class="mono">${money(s.total)}</td>
             <td data-label="${tr('colPaid')}" class="mono">${money(s.paid)}</td>
             <td data-label="${tr('colDue')}">${s.due > 0 ? `<span class="pill warn">${money(s.due)}</span>` : `<span class="pill ok">${tr('settled')}</span>`}</td>
-            <td data-label=""><button class="btn secondary small" onclick="editShopkeeperSale('${s.id}')">${tr('edit')}</button> <button class="btn secondary small" onclick="shareShopkeeperSaleWhatsApp('${s.id}')">${tr('share')}</button></td>
+            <td data-label=""><button class="btn secondary small" onclick="editShopkeeperSale('${s.id}')">${tr('edit')}</button> <button class="btn secondary small" onclick="openInvoiceModal('${s.id}','shopkeeper')">${tr('printInvoiceBtn')}</button> <button class="btn secondary small" onclick="shareShopkeeperSaleWhatsApp('${s.id}')">${tr('share')}</button></td>
           </tr>`).join('')}</tbody></table>
       ` : `<div class="empty-state">${tr('noSalesToShopkeepersYet')}</div>`}
     </div>
@@ -1584,7 +1697,9 @@ function openShopkeeperSaleModal() {
       const productId = r.querySelector('.li-product').value;
       const qty = Number(r.querySelector('.li-qty').value);
       const p = state.products.find((x) => x.id === productId);
-      return p ? { productId, name: p.name, qty, price: p.salePrice, lineTotal: p.salePrice * qty } : null;
+      if (!p) return null;
+      const unitPrice = p.wholesalePrice || p.salePrice;
+      return { productId, name: p.name, qty, price: unitPrice, lineTotal: unitPrice * qty };
     }).filter((i) => i && i.productId && i.qty > 0);
 
     if (!items.length) { toast(tr('addAtLeastOneItem')); reEnable(); return; }
@@ -1635,7 +1750,7 @@ function shopkeeperSaleLineRow(rowId) {
     <div class="line-item-row" data-row="${rowId}">
       <select class="li-product">
         <option value="">${tr('selectProduct')}</option>
-        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)})</option>`).join('')}
+        ${state.products.map((p) => `<option value="${p.id}">${p.name} (${crateBreakdown(p.stock, p.unitsPerCrate)}) — ${money(p.wholesalePrice || p.salePrice)}${p.wholesalePrice ? ' WS' : ''}</option>`).join('')}
       </select>
       <input class="li-qty" type="number" min="1" value="1" placeholder="Qty" />
       <span class="mono" style="font-size:12px;color:var(--muted);">${tr('unitPriceAuto')}</span>
