@@ -498,6 +498,27 @@ function initLanguage() {
   }
 }
 
+/* ---------------- Dark mode ---------------- */
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = theme === 'dark' ? '☀️ Light Mode' : '🌙 Dark Mode';
+  try { localStorage.setItem('hm_theme', theme); } catch (e) { /* ignore */ }
+}
+
+function initTheme() {
+  let saved = 'light';
+  try { saved = localStorage.getItem('hm_theme') || 'light'; } catch (e) { /* ignore */ }
+  applyTheme(saved);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) {
+    btn.addEventListener('click', () => {
+      const current = document.documentElement.getAttribute('data-theme');
+      applyTheme(current === 'dark' ? 'light' : 'dark');
+    });
+  }
+}
+
 const formatDateTime = (dateStr) => new Date(dateStr).toLocaleString('en-GB', { day: '2-digit', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true });
 const uid = () => Math.random().toString(36).slice(2, 10);
 
@@ -584,6 +605,28 @@ function animateCountUps(container) {
     }
     requestAnimationFrame(tick);
   });
+}
+
+// Small celebratory confetti burst — used when a customer/shopkeeper's due balance
+// is fully cleared to Rs 0. Pure CSS/DOM, no external library needed.
+function celebratePayment() {
+  const colors = ['#C97C2E', '#3E7A55', '#16332B', '#D89A4E', '#F1D9BC'];
+  const container = document.createElement('div');
+  container.className = 'confetti-burst';
+  for (let i = 0; i < 26; i++) {
+    const piece = document.createElement('span');
+    piece.className = 'confetti-piece';
+    const angle = (Math.random() * 360) * (Math.PI / 180);
+    const distance = 90 + Math.random() * 110;
+    piece.style.setProperty('--dx', `${Math.cos(angle) * distance}px`);
+    piece.style.setProperty('--dy', `${Math.sin(angle) * distance - 40}px`);
+    piece.style.setProperty('--rot', `${(Math.random() * 720 - 360)}deg`);
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = `${Math.random() * 0.1}s`;
+    container.appendChild(piece);
+  }
+  document.body.appendChild(container);
+  setTimeout(() => container.remove(), 1300);
 }
 
 function toast(msg) {
@@ -719,6 +762,7 @@ function setView(view) {
 
 document.getElementById('topbar-date').textContent = todayStr();
 initLanguage();
+initTheme();
 
 /* ---------------- Firestore live sync ---------------- */
 let unsubscribers = [];
@@ -1369,6 +1413,27 @@ window.openInvoiceModal = (id, type) => {
   document.getElementById('invoice-print-btn').addEventListener('click', () => window.print());
 };
 
+// Renders the invoice as an actual PNG image (off-screen), so it can be shared as
+// a photo — WhatsApp text messages can't carry the colors/fonts of the real invoice.
+async function generateInvoiceImageFile(sale, buyerLabel, buyerName, filename) {
+  if (typeof html2canvas === 'undefined') return null;
+  const container = document.createElement('div');
+  container.style.cssText = 'position:fixed; left:-9999px; top:0; background:var(--cream);';
+  container.innerHTML = buildInvoiceHtml(sale, buyerLabel, buyerName);
+  document.body.appendChild(container);
+  try {
+    const target = container.querySelector('.invoice-doc');
+    const canvas = await html2canvas(target, { backgroundColor: '#ffffff', scale: 2 });
+    const blob = await new Promise((resolve) => canvas.toBlob(resolve, 'image/png'));
+    if (!blob) return null;
+    return new File([blob], filename, { type: 'image/png' });
+  } catch (err) {
+    return null;
+  } finally {
+    container.remove();
+  }
+}
+
 window.shareSaleWhatsApp = async (id) => {
   const s = state.sales.find((x) => x.id === id);
   if (!s) return;
@@ -1388,6 +1453,23 @@ window.shareSaleWhatsApp = async (id) => {
     tr('waThanks'),
   ].filter(Boolean);
   const text = lines.join('\n');
+  const buyerName = s.customerName || tr('walkIn');
+  const invoiceFilename = `${s.invoiceNo ? formatInvoice(s.invoiceNo) : 'invoice'}.png`;
+
+  // Prefer sharing the actual styled invoice as a PHOTO (looks like the real invoice —
+  // WhatsApp text can't carry its colors/fonts), on devices that support sharing files.
+  if (navigator.canShare && !isDesktopDevice()) {
+    try {
+      const file = await generateInvoiceImageFile(s, tr('customerLabel'), buyerName, invoiceFilename);
+      if (file && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: tr('waShareTitle'), text });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+      // fall through to text sharing below
+    }
+  }
 
   // Prefer the phone's native "Share to…" sheet (WhatsApp, SMS, Email, etc.),
   // same as sharing a photo from the Gallery — but skip it on a real desktop/PC,
@@ -1524,6 +1606,7 @@ window.openPaymentModal = (customerId) => {
       await db.collection('customers').doc(c.id).update({ totalDue: c.totalDue - amt });
       toast(tr('paymentRecorded'));
       closeModal();
+      if (c.totalDue - amt <= 0) celebratePayment();
     } catch (err) {
       reEnable();
       toast(tr('saveFailed'));
@@ -1652,6 +1735,7 @@ window.openShopkeeperPaymentModal = (shopkeeperId) => {
       await db.collection('shopkeepers').doc(k.id).update({ totalDue: k.totalDue - amt });
       toast(tr('paymentRecorded'));
       closeModal();
+      if (k.totalDue - amt <= 0) celebratePayment();
     } catch (err) {
       reEnable();
       toast(tr('saveFailed'));
@@ -1835,6 +1919,19 @@ window.shareShopkeeperSaleWhatsApp = async (id) => {
     tr('waThanks'),
   ].filter(Boolean);
   const text = lines.join('\n');
+  const invoiceFilename = `${s.invoiceNo ? formatInvoice(s.invoiceNo) : 'invoice'}.png`;
+
+  if (navigator.canShare && !isDesktopDevice()) {
+    try {
+      const file = await generateInvoiceImageFile(s, tr('shopkeeperLabel'), s.shopkeeperName, invoiceFilename);
+      if (file && navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: tr('waShareTitle'), text });
+        return;
+      }
+    } catch (err) {
+      if (err && err.name === 'AbortError') return;
+    }
+  }
 
   if (navigator.share && !isDesktopDevice()) {
     try {
