@@ -16,6 +16,11 @@ const state = {
   reportFrom: null,
   reportTo: null,
   lang: 'en',
+  viewHistory: [],
+  searchInventory: '',
+  searchSales: '',
+  searchCustomers: '',
+  searchShopkeepers: '',
 };
 
 const money = (n) => `Rs ${Number(n || 0).toLocaleString('en-PK', { maximumFractionDigits: 0 })}`;
@@ -36,6 +41,13 @@ const translations = {
     navSales: 'Sales',
     navCustomers: 'Customers & Dues',
     navShopkeepers: 'Shopkeepers',
+    navCollections: 'Collections',
+    searchPlaceholder: 'Search…',
+    collectionsHeading: 'Total Owed to You',
+    collectionsType: 'Type',
+    typeCustomer: 'Customer',
+    typeShopkeeper: 'Shopkeeper',
+    noDuesOwed: 'Nobody owes you anything right now.',
     navSuppliers: 'Suppliers & Purchases',
     langToggleLabel: 'اردو / English',
     signOut: 'Sign out',
@@ -257,6 +269,13 @@ const translations = {
     navSales: 'فروخت',
     navCustomers: 'کسٹمرز اور واجبات',
     navShopkeepers: 'دکاندار',
+    navCollections: 'وصولیاں',
+    searchPlaceholder: 'تلاش کریں…',
+    collectionsHeading: 'آپ کے واجب الادا کل رقم',
+    collectionsType: 'قسم',
+    typeCustomer: 'کسٹمر',
+    typeShopkeeper: 'دکاندار',
+    noDuesOwed: 'اس وقت کسی پر کوئی رقم واجب الادا نہیں۔',
     navSuppliers: 'سپلائرز اور خریداری',
     langToggleLabel: 'اردو / English',
     signOut: 'سائن آؤٹ',
@@ -523,6 +542,32 @@ const formatDateTime = (dateStr) => new Date(dateStr).toLocaleString('en-GB', { 
 const uid = () => Math.random().toString(36).slice(2, 10);
 
 // Formats a raw piece-count as "N crates + M pcs" using the product's crate size.
+// Case-insensitive substring filter across a few fields of a list — used by every
+// search box in the app. Keeps the full list when the search term is empty.
+function filterBySearch(list, term, fields) {
+  if (!term || !term.trim()) return list;
+  const t = term.trim().toLowerCase();
+  return list.filter((item) => fields.some((f) => (item[f] || '').toString().toLowerCase().includes(t)));
+}
+
+// Renders a search input bound to a state key, re-running the given render function
+// on every keystroke while keeping focus + cursor position intact.
+function searchBarHtml(stateKey, id) {
+  const value = state[stateKey] || '';
+  return `<div class="search-bar"><input type="search" id="${id}" placeholder="${tr('searchPlaceholder')}" value="${value.replace(/"/g, '&quot;')}" /></div>`;
+}
+function wireSearchBar(id, stateKey, rerenderFn) {
+  const input = document.getElementById(id);
+  if (!input) return;
+  input.addEventListener('input', () => {
+    const cursor = input.selectionStart;
+    state[stateKey] = input.value;
+    rerenderFn();
+    const fresh = document.getElementById(id);
+    if (fresh) { fresh.focus(); fresh.setSelectionRange(cursor, cursor); }
+  });
+}
+
 function crateBreakdown(pcs, perCrate) {
   const size = Number(perCrate) > 0 ? Number(perCrate) : null;
   if (!size) return `${pcs} ${tr('pcs')}`;
@@ -731,7 +776,7 @@ document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').f
 
 const moreSheetBackdrop = document.getElementById('more-sheet-backdrop');
 const moreBtn = document.getElementById('bottom-more-btn');
-const MORE_SHEET_VIEWS = ['reports', 'lowstock', 'recentsales', 'shopkeepers'];
+const MORE_SHEET_VIEWS = ['reports', 'lowstock', 'recentsales', 'shopkeepers', 'collections'];
 
 function openMoreSheet() { moreSheetBackdrop.classList.add('show'); }
 function closeMoreSheet() { moreSheetBackdrop.classList.remove('show'); }
@@ -743,7 +788,11 @@ document.querySelectorAll('.more-sheet-item[data-view]').forEach((btn) => {
   btn.addEventListener('click', () => { closeMoreSheet(); setView(btn.dataset.view); });
 });
 
-function setView(view) {
+function setView(view, opts) {
+  opts = opts || {};
+  if (!opts.skipHistory && state.view && state.view !== view) {
+    state.viewHistory.push(state.view);
+  }
   state.view = view;
   document.querySelectorAll('.nav-item[data-view], .bottom-nav-item[data-view]').forEach((b) => b.classList.toggle('active', b.dataset.view === view));
   moreBtn.classList.toggle('active', MORE_SHEET_VIEWS.includes(view));
@@ -755,10 +804,18 @@ function setView(view) {
   void target.offsetWidth; // restart animation
   target.classList.add('view-enter');
   const dict = translations[state.lang] || translations.en;
-  const titles = { dashboard: dict.navDashboard, reports: dict.navReports, lowstock: dict.navLowStock, recentsales: dict.navRecentSales, inventory: dict.navInventory, sales: dict.navSales, customers: dict.navCustomers, shopkeepers: dict.navShopkeepers, suppliers: dict.navSuppliers };
+  const titles = { dashboard: dict.navDashboard, reports: dict.navReports, lowstock: dict.navLowStock, recentsales: dict.navRecentSales, inventory: dict.navInventory, sales: dict.navSales, customers: dict.navCustomers, shopkeepers: dict.navShopkeepers, suppliers: dict.navSuppliers, collections: dict.navCollections };
   document.getElementById('view-title').textContent = titles[view];
+  const backBtn = document.getElementById('back-btn');
+  if (backBtn) backBtn.style.display = state.viewHistory.length ? 'flex' : 'none';
   renderAll();
 }
+
+window.goBackView = () => {
+  const prev = state.viewHistory.pop();
+  if (prev) setView(prev, { skipHistory: true });
+};
+document.getElementById('back-btn').addEventListener('click', () => goBackView());
 
 document.getElementById('topbar-date').textContent = todayStr();
 initLanguage();
@@ -799,6 +856,37 @@ function renderAll() {
   if (state.view === 'customers') renderCustomers();
   if (state.view === 'shopkeepers') renderShopkeepers();
   if (state.view === 'suppliers') renderSuppliers();
+  if (state.view === 'collections') renderCollections();
+}
+
+function renderCollections() {
+  const el = document.getElementById('view-collections');
+  const rows = [
+    ...state.customers.filter((c) => c.totalDue > 0).map((c) => ({ type: 'customer', id: c.id, name: c.name, phone: c.phone, due: c.totalDue })),
+    ...state.shopkeepers.filter((k) => k.totalDue > 0).map((k) => ({ type: 'shopkeeper', id: k.id, name: k.name, phone: k.phone, due: k.totalDue })),
+  ].sort((a, b) => b.due - a.due);
+  const totalOwed = rows.reduce((a, r) => a + r.due, 0);
+
+  el.innerHTML = `
+    <div class="stat-grid" style="grid-template-columns:1fr; margin-bottom:18px;">
+      <div class="stat-card warn"><div class="label">${tr('collectionsHeading')}</div><div class="value" data-countup="${totalOwed}" data-format="money">Rs 0</div></div>
+    </div>
+    <div class="panel">
+      <div class="panel-head"><h3>${tr('collectionsHeading')}</h3></div>
+      ${rows.length ? `
+        <table><thead><tr><th>${tr('collectionsType')}</th><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
+        <tbody>${rows.map((r) => `
+          <tr>
+            <td data-label="${tr('collectionsType')}"><span class="pill ${r.type === 'shopkeeper' ? 'neutral' : 'warn'}">${r.type === 'shopkeeper' ? tr('typeShopkeeper') : tr('typeCustomer')}</span></td>
+            <td data-label="${tr('colName')}" class="ltr-field">${r.name}</td>
+            <td data-label="${tr('colPhone')}" class="ltr-field">${r.phone || '—'}</td>
+            <td data-label="${tr('colDue')}"><span class="pill warn">${money(r.due)}</span></td>
+            <td data-label=""><button class="btn secondary small" onclick="${r.type === 'shopkeeper' ? `openShopkeeperPaymentModal('${r.id}')` : `openPaymentModal('${r.id}')`}">${tr('recordPayment')}</button></td>
+          </tr>`).join('')}</tbody></table>
+      ` : `<div class="empty-state">${tr('noDuesOwed')}</div>`}
+    </div>
+  `;
+  animateCountUps(el);
 }
 
 function renderLowStock() {
@@ -943,7 +1031,7 @@ function renderDashboard() {
   const todayKey = new Date().toDateString();
   const todaysSales = state.sales.filter((s) => new Date(s.date).toDateString() === todayKey);
   const todayTotal = todaysSales.reduce((a, s) => a + s.total, 0);
-  const totalDue = state.customers.reduce((a, c) => a + (c.totalDue || 0), 0);
+  const totalDue = state.customers.reduce((a, c) => a + (c.totalDue || 0), 0) + state.shopkeepers.reduce((a, k) => a + (k.totalDue || 0), 0);
   const stockValue = state.products.reduce((a, p) => a + p.stock * p.costPrice, 0);
   const totalPcs = state.products.reduce((a, p) => a + (p.stock || 0), 0);
   const totalCrates = state.products.reduce((a, p) => {
@@ -984,7 +1072,7 @@ function renderDashboard() {
     <div class="stat-grid">
       <div class="stat-card clickable" onclick="gotoTodaySales()"><div class="label">${tr('statTodaySales')}</div><div class="value" data-countup="${todayTotal}" data-format="money">Rs 0</div></div>
       <div class="stat-card clickable" onclick="gotoTodaySales()"><div class="label">${tr('statSalesRecordedToday')}</div><div class="value" data-countup="${todaysSales.length}" data-format="int">0</div></div>
-      <div class="stat-card clickable ${totalDue > 0 ? 'warn' : ''}" onclick="setView('customers')"><div class="label">${tr('statTotalDues')}</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable ${totalDue > 0 ? 'warn' : ''}" onclick="setView('collections')"><div class="label">${tr('statTotalDues')}</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
       <div class="stat-card clickable" onclick="setView('inventory')"><div class="label">${tr('statStockValue')}</div><div class="value" data-countup="${stockValue}" data-format="money">Rs 0</div></div>
       <div class="stat-card clickable" onclick="setView('inventory')"><div class="label">${tr('statTotalCrates')}</div><div class="value" data-countup="${totalCrates}" data-format="int">0</div></div>
       <div class="stat-card clickable" onclick="setView('inventory')"><div class="label">${tr('statTotalPcs')}</div><div class="value" data-countup="${totalPcs}" data-format="int">0</div></div>
@@ -1051,8 +1139,9 @@ function renderInventory() {
   }
 
   const tabs = ['All', ...categoryNames];
-  const activeProducts = state.inventoryTab === 'All' ? state.products : groups[state.inventoryTab];
-  const catTotals = categoryTotals(activeProducts);
+  const categoryProducts = state.inventoryTab === 'All' ? state.products : groups[state.inventoryTab];
+  const activeProducts = filterBySearch(categoryProducts, state.searchInventory, ['name', 'category']);
+  const catTotals = categoryTotals(categoryProducts);
 
   el.innerHTML = `
     <div class="category-tabs">
@@ -1064,6 +1153,7 @@ function renderInventory() {
     </div>
     <div class="panel">
       <div class="panel-head"><h3>${tr('productsHeading')}</h3><button class="btn small" id="add-product-btn">${tr('addProductBtn')}</button></div>
+      ${searchBarHtml('searchInventory', 'search-inventory')}
       <table><thead><tr><th>${tr('colName')}</th><th>${tr('colCategory')}</th><th>${tr('colCrates')}</th><th>${tr('colPcs')}</th><th>${tr('colCost')}</th><th>${tr('colSalePrice')}</th><th>${tr('colWholesale')}</th><th></th></tr></thead>
       <tbody>${activeProducts.map((p) => {
         const split = splitCratesPcs(p.stock, p.unitsPerCrate);
@@ -1089,6 +1179,7 @@ function renderInventory() {
       renderInventory();
     });
   });
+  wireSearchBar('search-inventory', 'searchInventory', renderInventory);
 }
 
 function openProductModal(existing) {
@@ -1215,13 +1306,22 @@ function renderSalesTable(sales) {
 function renderSales() {
   const el = document.getElementById('view-sales');
   const sorted = state.sales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const filtered = sorted.filter((s) => {
+    if (!state.searchSales || !state.searchSales.trim()) return true;
+    const t = state.searchSales.trim().toLowerCase();
+    return (s.customerName || '').toLowerCase().includes(t)
+      || (s.invoiceNo && formatInvoice(s.invoiceNo).toLowerCase().includes(t))
+      || s.items.some((i) => i.name.toLowerCase().includes(t));
+  });
   el.innerHTML = `
     <div class="panel">
       <div class="panel-head"><h3>${tr('allSalesHeading')}</h3><button class="btn small" id="add-sale-btn">${tr('recordSaleBtn')}</button></div>
-      ${renderSalesTable(sorted)}
+      ${searchBarHtml('searchSales', 'search-sales')}
+      ${renderSalesTable(filtered)}
     </div>
   `;
   document.getElementById('add-sale-btn').addEventListener('click', openSaleModal);
+  wireSearchBar('search-sales', 'searchSales', renderSales);
 }
 
 function openSaleModal() {
@@ -1547,12 +1647,14 @@ window.shareSaleWhatsApp = async (id) => {
    ============================================================ */
 function renderCustomers() {
   const el = document.getElementById('view-customers');
+  const filtered = filterBySearch(state.customers, state.searchCustomers, ['name', 'phone']);
   el.innerHTML = `
     <div class="panel">
       <div class="panel-head"><h3>${tr('customersHeading')}</h3><button class="btn small" id="add-customer-btn">${tr('addCustomerBtn')}</button></div>
+      ${searchBarHtml('searchCustomers', 'search-customers')}
       ${state.customers.length ? `
         <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
-        <tbody>${state.customers.map((c) => `
+        <tbody>${filtered.map((c) => `
           <tr>
             <td data-label="${tr('colName')}" class="ltr-field">${c.name}</td>
             <td data-label="${tr('colPhone')}">${c.phone || '—'}</td>
@@ -1566,6 +1668,7 @@ function renderCustomers() {
     </div>
   `;
   document.getElementById('add-customer-btn').addEventListener('click', () => openCustomerModal());
+  wireSearchBar('search-customers', 'searchCustomers', renderCustomers);
 }
 
 function openCustomerModal(existing) {
@@ -1667,12 +1770,14 @@ window.openPaymentModal = (customerId) => {
 function renderShopkeepers() {
   const el = document.getElementById('view-shopkeepers');
   const sales = state.shopkeeperSales.slice().sort((a, b) => new Date(b.date) - new Date(a.date));
+  const filteredShopkeepers = filterBySearch(state.shopkeepers, state.searchShopkeepers, ['name', 'phone']);
   el.innerHTML = `
     <div class="panel">
       <div class="panel-head"><h3>${tr('shopkeepersHeading')}</h3><button class="btn small" id="add-shopkeeper-btn">${tr('addShopkeeperBtn')}</button></div>
+      ${searchBarHtml('searchShopkeepers', 'search-shopkeepers')}
       ${state.shopkeepers.length ? `
         <table><thead><tr><th>${tr('colName')}</th><th>${tr('colPhone')}</th><th>${tr('colDue')}</th><th></th></tr></thead>
-        <tbody>${state.shopkeepers.map((k) => `
+        <tbody>${filteredShopkeepers.map((k) => `
           <tr>
             <td data-label="${tr('colName')}" class="ltr-field">${k.name}</td>
             <td data-label="${tr('colPhone')}">${k.phone || '—'}</td>
@@ -1704,6 +1809,7 @@ function renderShopkeepers() {
   `;
   document.getElementById('add-shopkeeper-btn').addEventListener('click', () => openShopkeeperModal());
   document.getElementById('add-shopkeeper-sale-btn').addEventListener('click', () => openShopkeeperSaleModal());
+  wireSearchBar('search-shopkeepers', 'searchShopkeepers', renderShopkeepers);
 }
 
 function openShopkeeperModal(existing) {

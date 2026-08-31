@@ -65,17 +65,19 @@
       <button class="nav-item" data-view="sales"><span class="dot"></span><span data-i18n="navSales">Sales</span></button>
       <button class="nav-item" data-view="customers"><span class="dot"></span><span data-i18n="navCustomers">Customers &amp; Dues</span></button>
       <button class="nav-item" data-view="shopkeepers"><span class="dot"></span><span data-i18n="navShopkeepers">Shopkeepers</span></button>
+      <button class="nav-item" data-view="collections"><span class="dot"></span><span data-i18n="navCollections">Collections</span></button>
       <button class="nav-item" data-view="suppliers"><span class="dot"></span><span data-i18n="navSuppliers">Suppliers &amp; Purchases</span></button>
     </nav>
     <button id="lang-toggle-btn" class="nav-item lang-toggle" data-i18n="langToggleLabel">اردو / English</button>
     <button id="theme-toggle-btn" class="nav-item lang-toggle">🌙 Dark Mode</button>
     <button id="backup-btn" class="nav-item" data-i18n="backupDataBtn">Backup Data</button>
     <button id="logout-btn" class="nav-item logout" data-i18n="signOut">Sign out</button>
-    <div class="app-version">v39</div>
+    <div class="app-version">v40</div>
   </aside>
 
   <main class="main">
     <header class="topbar">
+      <button id="back-btn" class="back-btn" aria-label="Back" style="display:none;">←</button>
       <h2 id="view-title">Dashboard</h2>
       <div class="topbar-date" id="topbar-date"></div>
     </header>
@@ -89,6 +91,7 @@
     <section id="view-customers" class="view"></section>
     <section id="view-suppliers" class="view"></section>
     <section id="view-shopkeepers" class="view"></section>
+    <section id="view-collections" class="view"></section>
   </main>
 
   <nav class="bottom-nav">
@@ -124,6 +127,7 @@
       <button class="more-sheet-item" data-view="lowstock" data-i18n="navLowStock">Low Stock</button>
       <button class="more-sheet-item" data-view="recentsales" data-i18n="navRecentSales">Recent Sales</button>
       <button class="more-sheet-item" data-view="shopkeepers" data-i18n="navShopkeepers">Shopkeepers</button>
+      <button class="more-sheet-item" data-view="collections" data-i18n="navCollections">Collections</button>
       <button class="more-sheet-item cancel" id="more-sheet-cancel" data-i18n="cancel">Cancel</button>
     </div>
   </div>

@@ -265,6 +265,20 @@ tbody tr:nth-child(n+9){animation-delay:.25s;}
 
 .panel{background:var(--paper); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; margin-bottom:22px;}
 .panel-head{display:flex; align-items:center; justify-content:between; gap:12px; padding:16px 20px; border-bottom:1px solid var(--line);}
+
+.search-bar{padding:12px 20px; border-bottom:1px solid var(--line);}
+.search-bar input{
+  width:100%; padding:9px 12px; border-radius:8px; border:1px solid var(--line); font-size:14px;
+  background:var(--cream); color:var(--ink);
+}
+.search-bar input:focus{outline:2px solid var(--green-mid); outline-offset:1px; background:var(--paper);}
+
+.back-btn{
+  background:none; border:none; font-size:19px; color:var(--green-deep); cursor:pointer; padding:4px 8px;
+  border-radius:8px; margin-right:4px; display:flex; align-items:center;
+}
+.back-btn:hover{background:var(--cream);}
+[dir="rtl"] .back-btn{transform:scaleX(-1); margin-right:0; margin-left:4px;}
 .panel-head h3{font-size:16px; flex:1;}
 
 .btn{
