@@ -982,22 +982,38 @@ function renderDashboard() {
 
   el.innerHTML = `
     <div class="stat-grid">
-      <div class="stat-card"><div class="label">${tr('statTodaySales')}</div><div class="value" data-countup="${todayTotal}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statSalesRecordedToday')}</div><div class="value" data-countup="${todaysSales.length}" data-format="int">0</div></div>
-      <div class="stat-card ${totalDue > 0 ? 'warn' : ''}"><div class="label">${tr('statTotalDues')}</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statStockValue')}</div><div class="value" data-countup="${stockValue}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statTotalCrates')}</div><div class="value" data-countup="${totalCrates}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">${tr('statTotalPcs')}</div><div class="value" data-countup="${totalPcs}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">${tr('statWeekSales')}</div><div class="value" data-countup="${weekTotal}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statTotalProfit')}</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statCustomers')}</div><div class="value" data-countup="${state.customers.length}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">${tr('statSuppliers')}</div><div class="value" data-countup="${state.suppliers.length}" data-format="int">0</div></div>
-      <div class="stat-card"><div class="label">${tr('statAvgSale')}</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
-      <div class="stat-card"><div class="label">${tr('statTopProduct')}</div><div class="value ltr-field" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
+      <div class="stat-card clickable" onclick="gotoTodaySales()"><div class="label">${tr('statTodaySales')}</div><div class="value" data-countup="${todayTotal}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable" onclick="gotoTodaySales()"><div class="label">${tr('statSalesRecordedToday')}</div><div class="value" data-countup="${todaysSales.length}" data-format="int">0</div></div>
+      <div class="stat-card clickable ${totalDue > 0 ? 'warn' : ''}" onclick="setView('customers')"><div class="label">${tr('statTotalDues')}</div><div class="value" data-countup="${totalDue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable" onclick="setView('inventory')"><div class="label">${tr('statStockValue')}</div><div class="value" data-countup="${stockValue}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable" onclick="setView('inventory')"><div class="label">${tr('statTotalCrates')}</div><div class="value" data-countup="${totalCrates}" data-format="int">0</div></div>
+      <div class="stat-card clickable" onclick="setView('inventory')"><div class="label">${tr('statTotalPcs')}</div><div class="value" data-countup="${totalPcs}" data-format="int">0</div></div>
+      <div class="stat-card clickable" onclick="gotoWeekSales()"><div class="label">${tr('statWeekSales')}</div><div class="value" data-countup="${weekTotal}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable" onclick="setView('reports')"><div class="label">${tr('statTotalProfit')}</div><div class="value" data-countup="${totalProfit}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable" onclick="setView('customers')"><div class="label">${tr('statCustomers')}</div><div class="value" data-countup="${state.customers.length}" data-format="int">0</div></div>
+      <div class="stat-card clickable" onclick="setView('suppliers')"><div class="label">${tr('statSuppliers')}</div><div class="value" data-countup="${state.suppliers.length}" data-format="int">0</div></div>
+      <div class="stat-card clickable" onclick="setView('reports')"><div class="label">${tr('statAvgSale')}</div><div class="value" data-countup="${Math.round(avgSale)}" data-format="money">Rs 0</div></div>
+      <div class="stat-card clickable" onclick="setView('reports')"><div class="label">${tr('statTopProduct')}</div><div class="value ltr-field" style="font-size:15px; line-height:1.3;">${topProductLabel}</div></div>
     </div>
   `;
   animateCountUps(el);
 }
+
+window.gotoTodaySales = () => {
+  const today = toDateInputValue(new Date());
+  state.reportFrom = today;
+  state.reportTo = today;
+  setView('reports');
+};
+
+window.gotoWeekSales = () => {
+  const to = new Date();
+  const from = new Date();
+  from.setDate(from.getDate() - 6);
+  state.reportFrom = toDateInputValue(from);
+  state.reportTo = toDateInputValue(to);
+  setView('reports');
+};
 
 /* ============================================================
    INVENTORY

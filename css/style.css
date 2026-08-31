@@ -204,6 +204,8 @@ input,select{font-family:inherit;}
 
 .stat-card, .panel{transition:transform .15s ease, box-shadow .15s ease;}
 .stat-card:hover{transform:translateY(-2px); box-shadow:0 4px 14px rgba(22,51,43,0.1);}
+.stat-card.clickable{cursor:pointer;}
+.stat-card.clickable:active{transform:translateY(0) scale(.98);}
 
 /* Entrance animation: stat cards and table rows fade/slide in with a slight
    stagger whenever a panel's content is (re)rendered — pure CSS, plays
